@@ -31,9 +31,9 @@
 categories:
   # - ai-ml
   # - performance-and-workflow
-  - scientific-software
+  # - scientific-software
   # - simulation
-  # - tools
+   - tools
   # - visualization
 
 themes:
@@ -128,20 +128,20 @@ themes:
   #     - Precision medicine
   #     - Regenerative medicine
   #
-  # - Information Technology
+   - Information Technology
   #     - Artificial intelligence
   #     - Biometrics
   #     - Cloud computing and virtualization
   #     - Complex systems
   #     - Computational science
-  #     - Conformance testing
+       - Conformance testing
   #     - Cyber-physical systems
   #         - Smart cities
-  #     - Cybersecurity
+       - Cybersecurity
   #         - Configuration and vulnerability management
   #         - Cryptography
   #         - Cybersecurity Education and Workforce Development
-  #         - Risk management
+           - Risk management
   #     - Data and informatics
   #         - Human language technology
   #         - Information retrieval
@@ -162,7 +162,7 @@ themes:
   #         - Next Generation Networks
   #         - Protocol Design and Standardization
   #         - Software-defined and virtual networks
-  #     - Privacy
+       - Privacy
   #     - Software research
   #         - Software assurance
   #         - Software performance
