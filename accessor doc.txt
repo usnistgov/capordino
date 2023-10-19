@@ -1,0 +1,69 @@
+
+NOTEs to keep in mind:
+When the CPRT data is parsed, there is only a flat list of nodes for the entire framework,
+   but each node has the element ID of it's parent.
+
+There are no optional parameters on accessors
+
+Segment maps are where we format the output for the OSCAL file.
+
+Accessors allow us to insert properties into the formatted output. Wherever there is an accessor, the tool inserts the derived text value.
+
+This is a list of accessor types in the tool control files:
+
+"cprtElement": This allows access to one of the listed CPRT node's properties.
+	"name of property"		name of property on the current CPRT item
+	
+"cprtElementNoSpaces": Same as cprtElement, but also replaces spaces with underscores on the derived text value.
+	"name of property"		name of property on the current CPRT item
+	
+"cprtElementNoParenths": Same as cprtElement, but also replaces parantheses with underscores on the derived text value.
+	"name of property"		name of property on the current CPRT item
+	
+"cprtElementDefaultIfEmpty": Same as cprtElement, but if the chosen property is empty, uses a default value.
+	"name of property"		name of property on the current CPRT item
+	"default value"			value to use if the accessed CPRT property is empty
+	
+"cprtOscalLookup": Provides the ability to use a segment map for output formatting with a single CPRT node (not a list).
+	"cprtParentType"		currently this parameter is not used
+	"cprtElementType"		type of this CPRT node's child element to use to derive the formatted output
+	"segment map": []		used to specify the desired formatted output
+
+"cprtOscalLookupProp": Returns a single property value froma single CPRT node derived from the search parameters
+	"node type name"		type of CPRT node to find on the parent CPRT node 
+	"parent element ID"     CPRT parent element node ID to search the target CPRT node, the value "*" can be used to
+								search all elements in the framework with the specified type
+	"index in list"			index of the item that is being looked up (usually 0)
+	"name of property"		name of property on the selected CPRT node
+
+"cprtOscalList": Used to iteratively process a list of child items on the currently processed CPRT node
+	"type of parent node"	This parameter is not used currently
+	"type of element"		This is the CPRT node type that can be listed as a child list on the currently processed CPRT node
+	"segment map": []		List of strings (including other accessors) that are used to construct the output text in the target document
+
+"cprtRootOscalList": Used to iteratively process a list of items listed by type in the entire framework
+	"type of parent node"	This parameter is not used currently
+	"type of element"		Element type to select from entire CPRT node list on this document (at any level in the tree)
+	"segment map": []		List of strings (including other accessors) that are used to construct the output text in the target document
+
+"cprtElementReqType": Returns the CPRT node element ID
+
+"cprtElementReqDiscussion": Returns the CPRT items text field contents
+
+"oscalId": Creates a document unique ID
+	"CPRT property name"	Property to use for the first part of the name (usually "elementIdentifier")
+	"added string"			String added to classify the id type
+
+"newUUID": Returns a new random UUID
+    "ref name"				This is the reference name to refer to the UUID later in the document
+
+"getUUID": Returns the stored value of a previously created UUID
+	"ref name"				Name of UUID to return
+
+"oscalDateTime": Returns the current date/time in the OSCAL required format
+
+"fwDisplayName": Returns the framework's user friendly name for catalog documents
+
+"ifNotEmpty": A method to exclude xml tags for CPRT nodes that don't always have content 
+	"CPRT node property"	This is the property to check to see if it exists or not
+	"Text to show"			This is the text to use in the output document if the property does exist
