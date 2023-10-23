@@ -1,12 +1,16 @@
-.pmd
-.pmdruleset.xml
-.project
-.settings/
-.checkstyle
-.classpath
-target/
-.ruleset
-.fbExcludeFilterFile
-pom.xml.releaseBackup
-release.properties
-.factorypath
+
+# Proprietary files not to be propagated
+
+# IDE files
+.vscode
+.DS_Store
+
+# Working files
+scratch
+backup*
+
+# test files
+
+
+# Files build by CI/CD
+
