@@ -455,8 +455,10 @@ public class MainGuiFrame extends javax.swing.JFrame {
         for(String str: fws){
             String srcFw = FwNameResolver.resolve((String)srcFrameworkSelect.getSelectedItem());
             String tgtFw = FwNameResolver.resolve(str);
+            System.out.println("this is the string: "+str);
             if(tgtFw.equals(srcFw)) continue;
             str = FwNameResolver.resolveDisplayName(str);
+
             m.addElement(str);
         }
         tgtFwsList.setModel(m);

@@ -47,6 +47,7 @@ public class FwNameResolver {
         for(JsonNode n: an){
             ArrayNode fwNameArray = (ArrayNode)n;
             String fwIdStr = n.get(0).asText();
+            System.out.println("This is fwIdStr: "+fwIdStr);
             fwDisplayNames.put(fwIdStr, n.get(1).asText());
             for(JsonNode fwName: fwNameArray)
             {
@@ -58,6 +59,7 @@ public class FwNameResolver {
         ArrayNode an2  = (ArrayNode)fwsNode;
         for(JsonNode n: an2){
             String str = n.asText();
+            System.out.println("Resolver String: "+str);
             cprtFrameworks.add(str);
         }
         
