@@ -1,0 +1,14 @@
+name: Question
+description: Ask your question
+labels: ['question']
+body:
+  - type: markdown
+    attributes:
+      value: Please note, often contacting via email at capordino@nist.gov is a more appropriate place for asking some questions.
+  - type: textarea
+    id: question-text
+    attributes:
+      label: Question
+      description: Please enter your question
+    validations:
+      required: true

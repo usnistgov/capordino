@@ -1,0 +1,210 @@
+{
+	"id": "mapping",
+	"oscalSegments": [
+		{
+			"segmentMap": [
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n",
+				"<mapping-collection xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" ",
+				"xsi:schemaLocation=\"http://csrc.nist.gov/ns/oscal/1.0 ",
+				"https://github.com/usnistgov/OSCAL/releases/download/v1.1.0/oscal_complete_schema.xsd\" ",
+				"xmlns=\"http://csrc.nist.gov/ns/oscal/1.0\" ",
+				"uuid=\"", "~docUuid", "\">\r\n",
+				"   <metadata>\r\n",
+				"      <title>", "~mdtitle", "</title>\r\n",
+				"      <last-modified>", "~mdlmod",	"</last-modified>\r\n",
+				"      <version>0.0.1</version>\r\n",
+				"      <oscal-version>1.1.0</oscal-version>\r\n",
+				"      <prop name=\"keywords\" value=\"critical infrastructure, cybersecurity, information security, information system, OSCAL, Open Security Controls Assessment Language, security functions, security requirements, system, system security\"/>\r\n",
+				"      <role id=\"author\">\r\n",
+				"         <title>National Institute of Standards and Technology</title>\r\n",
+				"      </role>\r\n",
+				"      <role id=\"creator\">\r\n",
+				"         <title>CyberESI Consulting Group, Incorporated</title>\r\n",
+				"      </role>\r\n",
+				"      <role id=\"contact\">\r\n",
+				"         <title>CyberESI Consulting Group, Incorporated</title>\r\n",
+				"      </role>\r\n",
+				"      <party type=\"organization\" uuid=\"", "~partyUuid", "\">\r\n",
+				"         <name>OSCAL NIST Team</name>\r\n",
+				"         <email-address>oscal@nist.gov</email-address>\r\n",
+				"         <address>\r\n",
+				"            <addr-line>National Institute of Standards and Technology</addr-line>\r\n",
+				"            <addr-line>Attn: Computer Security Division</addr-line>\r\n",
+				"            <addr-line>Information Technology Laboratory</addr-line>\r\n",
+				"            <addr-line>100 Bureau Drive (Mail Stop 8930)</addr-line>\r\n",
+				"            <city>Gaithersburg</city>\r\n",
+				"            <state>MD</state>\r\n",
+				"            <postal-code>20899-8930</postal-code>\r\n",
+				"         </address>\r\n",
+				"      </party>\r\n",
+				"      <party type=\"organization\" uuid=\"", "~cesiUuid", "\">\r\n",
+				"         <name>CyberESI Consulting Group, Incorporated</name>\r\n",
+				"         <email-address>info@cyberesi-cg.com</email-address>\r\n",
+				"         <telephone-number>4109213864</telephone-number>\r\n",
+				"      </party>\r\n",
+				"      <responsible-party role-id=\"author\">\r\n",
+				"         <party-uuid>", "~getPartyUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"      <responsible-party role-id=\"creator\">\r\n",
+				"         <party-uuid>", "~getCesiUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"      <responsible-party role-id=\"contact\">\r\n",
+				"         <party-uuid>", "~getCesiUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"   </metadata>\r\n",
+				"   <mapping uuid=\"", "~mapUuid", "\">\r\n",
+				"      <source-resource type=\"catalog\" href=\"", "~srcFwUuid", "\"/>\r\n",
+				"      <target-resource type=\"catalog\" href=\"", "~tgtFwUuid", "\"/>\r\n",
+				"~listOfMappings",
+				"   </mapping>\r\n",
+				"   <back-matter>\r\n",
+				"      <resource uuid=\"", "~srcCatUuid", "\">\r\n",
+				"         <rlink href=\"", "~srcCatFile", "\" media-type=\"application/xml\"/>\r\n",
+				"      </resource>\r\n",
+				"      <resource uuid=\"", "~tgtCatUuid", "\">\r\n",
+				"         <rlink href=\"", "~tgtCatFile", "\" media-type=\"application/xml\"/>\r\n",
+				"      </resource>\r\n",
+				"   </back-matter>\r\n",
+				"</mapping-collection>\r\n"
+			],
+			"~docUuid": [
+				"newUUID",
+				"thisDocUuid"
+			],
+			"~mdtitle": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"dbFocalDocTemplateName"
+			],
+			"~mdlmod": [
+				"oscalDateTime"
+			],
+			"~docUuid": [
+				"newUUID",
+				"thisDocUuid"
+			],
+			"~mdtitle": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"dbFocalDocTemplateName"
+			],
+			"~mdlmod": [
+				"oscalDateTime"
+			],
+			"~partyUuid": [
+				"newUUID",
+				"partyUuid"
+			],
+			"~getPartyUuid": [
+				"getUUID",
+				"partyUuid"
+			],
+			"~cesiUuid": [
+				"newUUID",
+				"cesiUuid"
+			],
+			"~getCesiUuid": [
+				"getUUID",
+				"cesiUuid"
+			],
+			"~mapUuid": [
+				"newUUID",
+				"thisMappingUuid"
+			],
+			"~srcFwUuid": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"srcCatUuid"
+			],
+			"~tgtFwUuid": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"tgtCatUuid"
+			],
+			"~srcCatUuid": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"srcCatUuid"
+			],
+			"~srcCatFile": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"srcCatFName"
+			],
+			"~tgtCatUuid": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"tgtCatUuid"
+			],
+			"~tgtCatFile": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"tgtCatFName"
+			],
+			"~listOfMappings": [
+				"cprtRootOscalList",
+				{
+					"cprtParentType": "",
+					"cprtElementType": "olirNode",
+					"segmentMap": [
+						"      <map uuid=\"",
+						"~1",
+						"\">\r\n",
+						"~3",
+						"~2",
+						"~4",
+						"         <source type=\"control\" id-ref=\"",
+						"~5",
+						"\"/>\r\n",
+						"         <target type=\"control\" id-ref=\"",
+						"~6",
+						"\"/>\r\n",
+						"      </map>\r\n"
+					],
+					"~1": [
+						"newUUID",
+						""
+					],
+					"~2": [
+						"cprtElement",
+						"dbSetTypeDescription"
+					],
+					"~3": [
+						"ifNotEmpty",
+						"dbSetTypeDescription",
+						"         <relationship>"
+					],
+					"~4": [
+						"ifNotEmpty",
+						"dbSetTypeDescription",
+						"</relationship>\r\n"
+					],
+					"~5": [
+						"cprtElement",
+						"dbFocalElementIdentifier"
+					],
+					"~6": [
+						"cprtElement",
+						"dbReferenceElementIdentifier"
+					]
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,244 @@
+{
+	"id": "csf_2_0_0",
+	"oscalSegments": [
+		{
+			"segmentMap": [
+				"<?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n",
+				"<catalog xmlns=\"https://csrc.nist.gov/ns/oscal/1.0\" \r\n",
+				"xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" \r\n",
+				"xsi:schemaLocation=\"http://csrc.nist.gov/ns/oscal/1.0 ",
+				"https://github.com/usnistgov/OSCAL/releases/download/v1.1.1/oscal_complete_schema.xsd\" \r\n",
+				"uuid=\"", "~docUuid", "\">\r\n",
+				"   <metadata>\r\n",
+				"      <title>NIST Cybersecurity Framework 2.0</title>\r\n",
+				"      <last-modified>", "~mdlmod", "</last-modified>\r\n",
+				"      <version>0.0.1</version>\r\n",
+				"      <oscal-version>1.1.1</oscal-version>\r\n",
+				"      <!-- prop name=\"generated-by\" value=\"CyberESI Consulting Group CPRT-to-OSCAL Conversion Tool\"/ -->\r\n",
+				"      <prop name=\"keywords\" value=\"critical infrastructure, cybersecurity, information security, information system, OSCAL, Open Security Controls Assessment Language, security functions, security requirements, system, system security\"/>\r\n",
+				"      <link rel=\"alternate\" href=\"", "~altDocUuid",	"\"/>\r\n",
+				"      <link rel=\"canonical\" href=\"", "~canonicalDocUuid", "\"/>\r\n",
+				"      <role id=\"publisher\">\r\n",
+				"         <title>Document converter to OSCAL</title>\r\n",
+				"      </role>\r\n",
+				"      <role id=\"author\">\r\n",
+				"         <title>National Institute of Standards and Technology</title>\r\n",
+				"      </role>\r\n",
+				"      <role id=\"contact\">\r\n",
+				"         <title>Contact</title>\r\n",
+				"      </role>\r\n",
+				"      <party type=\"organization\" uuid=\"", "~partyUuid", "\">\r\n",
+				"         <name>National Institute of Standards and Technology</name>\r\n",
+				"         <email-address>cyberframework@nist.gov</email-address>\r\n",
+				"         <address>\r\n",
+				"            <addr-line>National Institute of Standards and Technology</addr-line>\r\n",
+				"            <addr-line>Attn: Applied Cybersecurity Division</addr-line>\r\n",
+				"            <addr-line>Information Technology Laboratory</addr-line>\r\n",
+				"            <addr-line>100 Bureau Drive (Mail Stop 2000)</addr-line>\r\n",
+				"            <city>Gaithersburg</city>\r\n",
+				"            <state>MD</state>\r\n",
+				"            <postal-code>20899-2000</postal-code>\r\n",
+				"         </address>\r\n",
+				"      </party>\r\n",
+				"      <responsible-party role-id=\"publisher\">\r\n",
+				"         <party-uuid>", "~getPartyUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"      <responsible-party role-id=\"author\">\r\n",
+				"         <party-uuid>", "~getPartyUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"      <responsible-party role-id=\"contact\">\r\n",
+				"         <party-uuid>", "~getPartyUuid", "</party-uuid>\r\n",
+				"      </responsible-party>\r\n",
+				"   </metadata>\r\n",
+				"~1",
+				"   <back-matter>\r\n",
+				"      <resource uuid=\"", "~getAltDocUuid", "\">\r\n",
+				"         <title>The NIST Cybersecurity Framework 2.0 (PDF)</title>\r\n",
+				"         <rlink media-type=\"application/pdf\" href=\"https://nvlpubs.nist.gov/nistpubs/CSWP/NIST.CSWP.29.ipd.pdf\"/>\r\n",
+				"      </resource>\r\n",
+				"      <resource uuid=\"", "~getCanonicalDocUuid", "\">\r\n",
+				"         <title>The NIST Cybersecurity Framework 2.0 (DOI link)</title>\r\n",
+				"         <rlink media-type=\"application/pdf\" href=\"https://doi.org/10.6028/NIST.CSWP.29.ipd\"/>\r\n",
+				"      </resource>\r\n",
+				"   </back-matter>\r\n",
+				"</catalog>\r\n"
+			],
+			"~docUuid": [
+				"newUUID",
+				"thisDocUuid"
+			],
+			"~mdlmod": [
+				"oscalDateTime"
+			],
+			"~docUuid": [
+				"newUUID",
+				"thisDocUuid"
+			],
+			"~mdtitle": [
+				"cprtOscalLookupProp",
+				"olirNode",
+				"*",
+				"0",
+				"dbFocalDocTemplateName"
+			],
+			"~mdlmod": [
+				"oscalDateTime"
+			],
+			"~altDocUuid": [
+				"newUUID",
+				"altDocUuid"
+			],
+			"~canonicalDocUuid": [
+				"newUUID",
+				"canonicalDocUuid"
+			],
+			"~partyUuid": [
+				"newUUID",
+				"partyUuid"
+			],
+			"~cesiUuid": [
+				"newUUID",
+				"cesiUuid"
+			],
+			"~getPartyUuid": [
+				"getUUID",
+				"partyUuid"
+			],
+			"~getCesiUuid": [
+				"getUUID",
+				"cesiUuid"
+			],
+			"~getAltDocUuid": [
+				"getUUID",
+				"altDocUuid"
+			],
+			"~getCanonicalDocUuid": [
+				"getUUID",
+				"canonicalDocUuid"
+			],
+			"~1": [
+				"cprtRootOscalList",
+				{
+					"cprtParentType": "",
+					"cprtElementType": "function",
+					"segmentMap": [
+						"   <group class=\"", "~1",	"\" id=\"",	"~2", "\">\r\n",
+						"      <title>", "~3", "</title>\r\n",
+						"      <part name=\"overview\" id=\"",	"~4", "\">\r\n",
+						"         <p>", "~5", "</p>\r\n",
+						"      </part>\r\n",
+						"~6",
+						"   </group>\r\n"
+					],
+					"~1": [
+						"cprtElement",
+						"elementTypeIdentifier"
+					],
+					"~2": [
+						"cprtElement",
+						"elementIdentifier"
+					],
+					"~3": [
+						"cprtElement",
+						"title"
+					],
+					"~4": [
+						"oscalId",
+						"elementIdentifier",
+						"_stmt"
+					],
+					"~5": [
+						"cprtElement",
+						"text"
+					],
+					"~6": [
+						"cprtOscalList",
+						{
+							"cprtParentType": "function",
+							"cprtElementType": "category",
+							"segmentMap": [
+								"      <control class=\"category\" id=\"", "~1", "\">\r\n",
+								"         <title>", "~2", "</title>\r\n",
+								"         <part name=\"statement\" id=\"", "~3", "\">\r\n",
+								"            <p>", "~4", "</p>\r\n",
+								"         </part>\r\n",
+								"~5",
+								"      </control>\r\n"
+							],
+							"~1": [
+								"cprtElement",
+								"elementIdentifier"
+							],
+							"~2": [
+								"cprtElement",
+								"title"
+							],
+							"~3": [
+								"oscalId",
+								"elementIdentifier",
+								"_stmt"
+							],
+							"~4": [
+								"cprtElement",
+								"text"
+							],
+							"~5": [
+								"cprtOscalList",
+								{
+									"cprtParentType": "category",
+									"cprtElementType": "subcategory",
+									"segmentMap": [
+										"         <control class=\"subcategory\" id=\"", "~1", "\">\r\n",
+										"            <title>", "~2", "</title>\r\n",
+										"            <part name=\"statement\" id=\"", "~3", "\">\r\n",
+										"               <p>", "~4", "</p>\r\n",
+										"            </part>\r\n",
+										"~5",
+										"         </control>\r\n"
+									],
+									"~1": [
+										"cprtElement",
+										"elementIdentifier"
+									],
+									"~2": [
+										"cprtElement",
+										"elementIdentifier"
+									],
+									"~3": [
+										"oscalId",
+										"elementIdentifier",
+										"_stmt"
+									],
+									"~4": [
+										"cprtElement",
+										"text"
+									],
+									"~5": [
+										"cprtOscalLookup",
+										{
+											"cprtParentType": "subcategory",
+											"cprtElementType": "implementation_example",
+											"segmentMap": [
+												"            <part name=\"guidance\" id=\"", "~1", "\">\r\n",
+												"               <p>", "~2", "</p>\r\n",
+												"            </part>\r\n"
+											],
+											"~1": [
+												"cprtElement",
+												"elementIdentifier"
+											],
+											"~2": [
+												"cprtElement",
+												"text"
+											]
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			]
+		}
+	]
+}

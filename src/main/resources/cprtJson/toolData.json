@@ -1,0 +1,206 @@
+{
+	"frameworkNameResolver": [
+		[
+			"sp_800_221a_0_1_0",
+			"SP 800-221A"
+		],
+		[
+			"nistir_8259b_1_0_0",
+			"NISTIR 8259B"
+		],
+		[
+			"sp_800_53_5_1_0",
+			"SP 800-53A Rev 5"
+		],
+		[
+			"sp_800_53_a_5_1_0",
+			"SP 800-53A Rev 5"
+		],
+		[
+			"sp_800_53_b_5_1_0",
+			"SP 800-53B Rev 5"
+		],
+		[
+			"sp_800_53_5_1_1",
+			"SP 800-53 Rev 5.1.1"
+		],
+		[
+			"sp_800_53_a_5_1_1",
+			"SP 800-53A Rev 5.1.1"
+		],
+		[
+			"sp_800_53_b_5_1_1",
+			"SP 800-53B Rev 5.1.1"
+		],
+		[
+			"nistir_8259a_1_0_0",
+			"NISTIR 8259A"
+		],
+		[
+			"sp_800_171_2_0_0",
+			"SP 800-171 Rev 2"
+		],
+		[
+			"pf_1_0_0",
+			"Privacy Framework"
+		],
+		[
+			"csf_1_1_0",
+			"Cybersecurity Framework v1.1"
+		],
+		[
+			"csf_2_0_0",
+			"Cybersecurity Framework v2.0"
+		],
+		[
+			"sp_800_171_1_0_0",
+			"SP 800-171 Rev 1"
+		],
+		[
+			"sp_800_53_4_0_0",
+			"SP 800-53 Rev 4"
+		],
+		[
+			"sp_800_218_1_1_0",
+			"SP 800-218 SSDF"
+		],
+		[
+			"SCFv2023.2",
+			"SCFv2023.2"
+		],
+		[
+			"SP 800-177 Rev. 1",
+			"SP 800-177 Rev. 1"
+		],
+		[
+			"SP 800-161",
+			"SP 800-161"
+		],
+		[
+			"SP 800-82 Rev. 2",
+			"SP 800-82 Rev. 2"
+		],
+		[
+			"IoT Device CS Guidance",
+			"IoT Device CS Guidance"
+		],
+		[
+			"CTA-2088",
+			"CTA-2088"
+		],
+		[
+			"TÜV SÜD TG for NISTIR 8259",
+			"TÜV SÜD TG for NISTIR 8259"
+		],
+		[
+			"SESIP, Version 1.0",
+			"SESIP, Version 1.0"
+		],
+		[
+			"EIOTS-2011",
+			"EIOTS-2011"
+		],
+		[
+			"IoTSF IoT SCF v2.1",
+			"IoTSF IoT SCF v2.1"
+		],
+		[
+			"NIST SP 800-37 Revision 2",
+			"NIST SP 800-37 Revision 2"
+		],
+		[
+			"NISTIR-8286",
+			"NISTIR-8286"
+		],
+		[
+			"NISTIR-8286A",
+			"NISTIR-8286A"
+		],
+		[
+			"HITRUST CSF v9.2",
+			"HITRUST CSF v9.2"
+		],
+		[
+			"ISF SGP for IS 2018",
+			"ISF SGP for IS 2018"
+		],
+		[
+			"CIS Controls",
+			"CIS Controls"
+		],
+		[
+			"HITRUST CSF v9.3.1",
+			"HITRUST CSF v9.3.1"
+		],
+		[
+			"ts mitigation™ - open v1.1",
+			"ts mitigation™ - open v1.1"
+		],
+		[
+			"COBIT 2019",
+			"COBIT 2019"
+		],
+		[
+			"NIST SP 800-181",
+			"NIST SP 800-181"
+		],
+		[
+			"NISTIR 8374 Ransomware RM",
+			"NISTIR 8374 Ransomware RM"
+		],
+		[
+			"HITRUST CSF v9.6x",
+			"HITRUST CSF v9.6x"
+		],
+		[
+			"ISO/IEC 27001(2013)",
+			"ISO/IEC 27001(2013)"
+		],
+		[
+			"NISTIR-8286B",
+			"NISTIR-8286B"
+		],
+		[
+			"Department of Energy - C2M2",
+			"Department of Energy - C2M2"
+		],
+		[
+			"NERC-CIP",
+			"NERC-CIP"
+		],
+		[
+			"C13K - OpenFAIR Risk Taxonomy",
+			"C13K - OpenFAIR Risk Taxonomy"
+		],
+		[
+			"C13G - OpenFAIR Risk Analysis",
+			"C13G - OpenFAIR Risk Analysis"
+		],
+		[
+			"sp_800_213a_1_0_0",
+			"SP 800-213A Rev. 1"
+		],
+		[
+			"nice_1_1_0",
+			"NICE Framework"
+		]
+	],
+	"cprtFrameworks": [
+		"csf_2_0_0",
+		"sp_800_221a_0_1_0",
+		"sp_800_218_1_1_0",
+		"nistir_8259b_1_0_0",
+		"sp_800_53_5_1_1",
+		"sp_800_53_5_1_0",
+		"sp_800_53_a_5_1_1",
+		"sp_800_53_b_5_1_1",
+		"nistir_8259a_1_0_0",
+		"sp_800_171_2_0_0",
+		"pf_1_0_0",
+		"csf_1_1_0",
+		"sp_800_171_1_0_0",
+		"sp_800_53_4_0_0",
+		"sp_800_213a_1_0_0",
+		"nice_1_1_0"
+	]
+}

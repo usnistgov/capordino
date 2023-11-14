@@ -1,0 +1,78 @@
+name: Bug report
+description: Create a report to help us improve
+labels: ['bug']
+body:
+  # - type: checkboxes
+  #   attributes:
+  #     label: Is there an existing issue for this?
+  #     description: Please search to see if an issue already exists for the bug you encountered.
+  #     options:
+  #       - label: I have searched the existing issues
+  #         required: true
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is
+    validations:
+      required: true
+  - type: textarea
+    id: bug-affecting-who
+    attributes:
+      label: Who is the bug affecting
+      description: Describe the stakeholders affected by this bug
+    validations:
+      required: true
+  - type: dropdown
+    id: bug-affecting-what
+    attributes:
+      label: What is affected by this bug
+      description: Select the area(s) describing the scope of this bug
+      options:
+        - Generated catalog
+        - Generated mapping file
+        - Documentation
+        - Others
+      multiple: true
+    validations:
+      required: true
+  # - type: textarea
+  #   id: bug-conditions
+  #   attributes:
+  #     label: When does this occur
+  #     description: Describe the conditions under which the bug is occuring
+  #   validations:
+  #     required: true
+  - type: textarea
+    id: bug-replication
+    attributes:
+      label: How do we replicate this issue
+      description: What are the steps to reproduce this behavior (use screenshots if applicable)
+      placeholder: |
+        1. Do this...
+        2. Then this...
+        3. See error...
+    validations:
+      required: true
+  - type: textarea
+    id: bug-solution
+    attributes:
+      label: Expected behavior (i.e. solution)
+      description: A clear and concise description of what you expected to happen
+    validations:
+      required: true
+  - type: textarea
+    id: bug-comments
+    attributes:
+      label: Other comments
+      description: |
+        Add any other context about the problem here
+
+    validations:
+      required: false
+  - type: textarea
+    id: revisions
+    attributes:
+      label: Revisions
+      description: If you are creating the issue, this field is not required. When working on the issue, this field is for assigned developers to flag any important changes made to the description, goals, or acceptance criteria needed to complete the work.
+
