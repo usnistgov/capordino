@@ -1,8 +1,8 @@
-# OSCAL-CPRT
+# Cybersecurity And Privacy Open Reference Datasets IN Oscal (CAPORDINO)
 
-Investigation and development of tooling to allow mapping of 800-53 Controls to CPRT assets expressed in OSCAL formats
+Development of tooling to allow conversion of datasets managed by the [Cybersecruity and Privacy Reference Tool (CPRT)](https://csrc.nist.gov/projects/cprt) into [OSCAL](https://www.nist.gov/OSCAL) formats. 
 
-## Getting started
+## Getting started with GitHub
 
 To make it easy for you to get started with GitLab, here's a list of recommended next steps.
 
