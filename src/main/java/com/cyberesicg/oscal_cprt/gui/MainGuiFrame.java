@@ -456,7 +456,12 @@ public class MainGuiFrame extends javax.swing.JFrame {
             String srcFw = FwNameResolver.resolve((String)srcFrameworkSelect.getSelectedItem());
             String tgtFw = FwNameResolver.resolve(str);
             System.out.println("this is the string: "+str);
-            if(tgtFw.equals(srcFw)) continue;
+            try {
+                if(tgtFw.equals(srcFw)) continue;
+            } catch (NullPointerException e) {
+                System.out.println("tgtFw " + str + "is missing from toolData.json");
+                System.exit(1);
+            }
             str = FwNameResolver.resolveDisplayName(str);
 
             m.addElement(str);
