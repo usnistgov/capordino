@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
- */
 package com.cyberesicg.oscal_cprt.gui;
 
 import com.cyberesicg.oscal_cprt.logic.AppUtils;
