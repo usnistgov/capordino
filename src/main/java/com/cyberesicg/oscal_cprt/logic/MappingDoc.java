@@ -1,4 +1,3 @@
-
 package com.cyberesicg.oscal_cprt.logic;
 
 import com.fasterxml.jackson.databind.JsonNode;

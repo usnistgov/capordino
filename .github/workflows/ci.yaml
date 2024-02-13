@@ -1,0 +1,19 @@
+name: Capordino CI
+on:
+  push:
+    branches:
+      - main
+  pull_request: {}
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: maven
+      - name: maven build
+        run: mvn package
