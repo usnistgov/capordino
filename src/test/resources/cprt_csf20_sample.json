@@ -1,0 +1,117 @@
+{
+    "documents": [
+        {
+            "doc_identifier": "CSF_2_0_0",
+            "name": "The NIST Cybersecurity Framework 2.0 Draft",
+            "version": "Version  2.0",
+            "website": "https://csrc.nist.gov/pubs/cswp/29/the-nist-cybersecurity-framework-20/ipd"
+        }
+    ],
+    "relationship_types": [
+        {
+            "relationship_identifier": "projection",
+            "description": "Represents a relationship between two elements."
+        }
+    ],
+    "elements": [
+        {
+            "element_type": "function",
+            "element_identifier": "GV",
+            "title": "GOVERN",
+            "text": "Establish and monitor the organization's cybersecurity risk management strategy, expectations, and policy",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "sort",
+            "element_identifier": "S-GV",
+            "title": "00001",
+            "text": "",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "category",
+            "element_identifier": "GV.OC",
+            "title": "Organizational Context",
+            "text": "The circumstances - mission, stakeholder expectations, and legal, regulatory, and contractual requirements - surrounding the organization's cybersecurity risk management decisions are understood (formerly ID.BE)",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "subcategory",
+            "element_identifier": "GV.OC-01",
+            "title": "",
+            "text": "The organizational mission is understood and informs cybersecurity risk management (formerly ID.BE-02, ID.BE-03)",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "implementation_example",
+            "element_identifier": "GV.OC-01.1",
+            "title": "Ex1",
+            "text": "Share the organization's mission (e.g., through vision and mission statements, marketing, and service strategies) to provide a basis for identifying risks that may impede that mission",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "party",
+            "element_identifier": "first",
+            "title": "1st",
+            "text": "1st Party Risk",
+            "doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "element_type": "party",
+            "element_identifier": "third",
+            "title": "3rd",
+            "text": "3rd Party Risk",
+            "doc_identifier": "CSF_2_0_0"
+        }
+    ],
+    "relationships": [
+        {
+            "source_element_identifier": "GV",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "GV.OC",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "source_element_identifier": "GV",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "S-GV",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "source_element_identifier": "GV",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "GV.OC",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "source_element_identifier": "GV.OC",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "GV.OC-01",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "source_element_identifier": "GV.OC-01",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "GV.OC-01.1",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        },
+        {
+            "source_element_identifier": "GV.OC-01",
+            "source_doc_identifier": "CSF_2_0_0",
+            "dest_element_identifier": "first",
+            "dest_doc_identifier": "CSF_2_0_0",
+            "relationship_identifier": "projection",
+            "provenance_doc_identifier": "CSF_2_0_0"
+        }
+    ]
+}

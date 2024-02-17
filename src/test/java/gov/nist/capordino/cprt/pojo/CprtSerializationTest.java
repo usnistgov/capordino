@@ -11,18 +11,18 @@ import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class CprtSerializationTest {
-    final File CprtSample = new File("src/test/resources/sample_cprt.json");
+    final File CprtSample = new File("src/test/resources/cprt_sample.json");
     
     @Test
     public void shouldDeserializeSampleCprt() throws StreamReadException, DatabindException, IOException {
         ObjectMapper mapper = new ObjectMapper();
         CprtRoot root = mapper.readValue(CprtSample, CprtRoot.class);
 
-        Assert.assertEquals(1, root.documents.size());
-        Assert.assertEquals(1, root.relationship_types.size());
-        Assert.assertEquals(2, root.elements.size());
-        Assert.assertEquals(1, root.relationships.size());
+        Assert.assertEquals(1, root.getDocuments().size());
+        Assert.assertEquals(1, root.getRelationshipTypes().size());
+        Assert.assertEquals(2, root.getElements().size());
+        Assert.assertEquals(1, root.getRelationships().size());
 
-        Assert.assertEquals(root.documents.get(0).doc_identifier, "Sample");
+        Assert.assertEquals(root.getDocuments().get(0).doc_identifier, "Sample");
     }
 }
