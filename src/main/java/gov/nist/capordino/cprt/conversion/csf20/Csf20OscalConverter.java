@@ -39,7 +39,7 @@ public class Csf20OscalConverter {
         this.cprtRoot = cprtRoot;
     }
 
-    public Catalog  toOscal() {
+    public Catalog toOscal() {
         ZonedDateTime now = ZonedDateTime.now();
         
         Catalog catalog = new Catalog();
@@ -67,6 +67,9 @@ public class Csf20OscalConverter {
             .filter(elem -> elem.element_type.equals(type));
     }
 
+    /**
+     * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
+     */
     private String escapeSquareBrackets(String input) {
         return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
     }
