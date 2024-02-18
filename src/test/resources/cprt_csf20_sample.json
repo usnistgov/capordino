@@ -82,14 +82,6 @@
             "provenance_doc_identifier": "CSF_2_0_0"
         },
         {
-            "source_element_identifier": "GV",
-            "source_doc_identifier": "CSF_2_0_0",
-            "dest_element_identifier": "GV.OC",
-            "dest_doc_identifier": "CSF_2_0_0",
-            "relationship_identifier": "projection",
-            "provenance_doc_identifier": "CSF_2_0_0"
-        },
-        {
             "source_element_identifier": "GV.OC",
             "source_doc_identifier": "CSF_2_0_0",
             "dest_element_identifier": "GV.OC-01",

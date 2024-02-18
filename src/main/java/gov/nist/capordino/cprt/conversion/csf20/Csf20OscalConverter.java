@@ -1,5 +1,6 @@
 package gov.nist.capordino.cprt.conversion.csf20;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +27,13 @@ public class Csf20OscalConverter {
     private final String SUBCATEGORY_ELEMENT_TYPE = "subcategory";
     private final String IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE = "implementation_example";
     private final String PARTY_ELEMENT_TYPE = "party";
+
+    /**
+     * The URI to use for CSF-specific props.
+     * 
+     * TODO: This should be updated to a more official URI once it is available.
+     */
+    private final String CSF_URI = "https://doi.org/10.6028/NIST.CSWP.29.ipd";
 
     public Csf20OscalConverter(CprtRoot cprtRoot) {
         this.cprtRoot = cprtRoot;
@@ -152,6 +160,7 @@ public class Csf20OscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, PARTY_ELEMENT_TYPE).map(elem -> {
             Property riskPartyProp = new Property();
             riskPartyProp.setName("risk-party");
+            riskPartyProp.setNs(URI.create(CSF_URI));
             riskPartyProp.setValue(elem.title);
             riskPartyProp.setRemarks(MarkupMultiline.fromMarkdown(elem.text));
             return riskPartyProp;

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
@@ -26,33 +25,37 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class Csf20OscalConverterTest {
+    @TempDir
+    static
+    Path tempOutDirectory;
+
+    static Path oscalOutFilePath;
+
     private static OscalBindingContext bindingContext;
 
     @BeforeAll
     static void initialize() {
         bindingContext = OscalBindingContext.instance();
+        oscalOutFilePath = tempOutDirectory.resolve("csf20-sample_catalog.xml");
     }
 
     /**
      * A CPRT file that contains a subset of CSF 2.0 content.
      */
-    final File CsfCprtSample = new File("src/test/resources/cprt_csf20_sample.json");
+    final File csfCprtSample = new File("src/test/resources/cprt_csf20_sample.json");
 
     @Test
     @Order(1)
-    void testSmokeConvertToOscal(@TempDir(cleanup = CleanupMode.DEFAULT) Path tempDir) throws StreamReadException, DatabindException, IOException {
-        // Change `cleanup` to `CleanupMode.NEVER` to keep the temp directory after the test
-        
+    void testConvertToOscal() throws StreamReadException, DatabindException, IOException {        
         ObjectMapper mapper = new ObjectMapper();
-        CprtRoot root = mapper.readValue(CsfCprtSample, CprtRoot.class);
+        CprtRoot root = mapper.readValue(csfCprtSample, CprtRoot.class);
 
         Csf20OscalConverter converter = new Csf20OscalConverter(root);
         Catalog catalog = converter.toOscal();
 
-        Path out = tempDir.resolve("csf20-sample_catalog.xml");
-
+        // Write to a file and load again to ensure the serialization and deserialization works
         ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-        serializer.serialize(catalog, out);
-        assertNotNull(bindingContext.loadCatalog(out));
+        serializer.serialize(catalog, oscalOutFilePath);
+        assertNotNull(bindingContext.loadCatalog(oscalOutFilePath));
     }
 }
