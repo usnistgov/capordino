@@ -1,6 +1,7 @@
 package gov.nist.capordino.cprt.pojo;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 public class CprtMetadataVersion {
     public String name;
@@ -22,7 +23,7 @@ public class CprtMetadataVersion {
     public String breadcrumb;
     public boolean withdrawn;
     public String publicationStatus;
-    public String publicationReleaseDate;
+    public Date publicationReleaseDate;
     public boolean publiclyViewable;
     public boolean expandFrameworkVersion;
     public ArrayList<CprtMetadataType> types;

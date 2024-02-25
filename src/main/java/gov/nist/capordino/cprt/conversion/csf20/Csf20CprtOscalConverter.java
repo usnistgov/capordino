@@ -1,13 +1,14 @@
 package gov.nist.capordino.cprt.conversion.csf20;
 
+import java.io.IOException;
 import java.net.URI;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Stream;
 
+import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
+import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.pojo.CprtElement;
+import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
@@ -15,11 +16,29 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
-import gov.nist.secauto.oscal.lib.model.Metadata;
 import gov.nist.secauto.oscal.lib.model.Property;
 
-public class Csf20OscalConverter {
-    private CprtRoot cprtRoot;
+public class Csf20CprtOscalConverter extends AbstractOscalConverter {
+    protected void assertFrameworkIdentifier() throws InvalidFrameworkIdentifier {
+        if (!cprtMetadataVersion.frameworkIdentifier.equals("CSF")) {
+            throw new InvalidFrameworkIdentifier("CSF", cprtMetadataVersion.frameworkIdentifier);
+        }
+    }
+
+    public Csf20CprtOscalConverter(CprtMetadataVersion cprtMetadataVersion, CprtRoot cprtRoot) throws InvalidFrameworkIdentifier {
+        super(cprtMetadataVersion, cprtRoot);
+        assertFrameworkIdentifier();
+    }
+    
+    public Csf20CprtOscalConverter(CprtMetadataVersion cprtMetadataVersion) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+        super(cprtMetadataVersion);
+        assertFrameworkIdentifier();
+    }
+
+    public Csf20CprtOscalConverter(String frameworkVersionIdentifier) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+        super(frameworkVersionIdentifier);
+        assertFrameworkIdentifier();
+    }
 
     private final String FUNCTION_ELEMENT_TYPE = "function";
     private final String SORT_ELEMENT_TYPE = "sort";
@@ -30,52 +49,17 @@ public class Csf20OscalConverter {
 
     /**
      * The URI to use for CSF-specific props.
-     * 
-     * TODO: This should be updated to a more official URI once it is available.
      */
-    private final String CSF_URI = "https://doi.org/10.6028/NIST.CSWP.29.ipd";
+    private final URI CSF_URI = URI.create("https://csrc.nist.gov/ns/csf");
 
-    public Csf20OscalConverter(CprtRoot cprtRoot) {
-        this.cprtRoot = cprtRoot;
-    }
-
-    public Catalog toOscal() {
-        ZonedDateTime now = ZonedDateTime.now();
-        
-        Catalog catalog = new Catalog();
-        catalog.setUuid(UUID.randomUUID());
-        
-        Metadata metadata = new Metadata();
-
-        metadata.setOscalVersion("v1.1.2");
-        metadata.setTitle(MarkupLine.fromMarkdown(cprtRoot.getDocuments().get(0).name));
-        metadata.setLastModified(now);
-        metadata.setPublished(now);
-        metadata.setVersion(cprtRoot.getDocuments().get(0).version);
-
-        catalog.setMetadata(metadata);
-
+    @Override
+    protected void hydrateCatalog(Catalog catalog) {
         catalog.setGroups(buildFunctionGroups(catalog));
-
-        return catalog;
-    }
-
-    private Stream<CprtElement> getRelatedElementsBySourceIdWithType(String sourceId, String type) {
-        return cprtRoot.getRelationships().stream()
-            .filter(rel -> rel.getSourceGlobalIdentifier().equals(sourceId))
-            .map(rel -> cprtRoot.getElementById(rel.getDestGlobalIdentifier()))
-            .filter(elem -> elem.element_type.equals(type));
-    }
-
-    /**
-     * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
-     */
-    private String escapeSquareBrackets(String input) {
-        return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
     }
 
     private ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
+        elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
         elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
         return elementProse;
@@ -135,7 +119,9 @@ public class Csf20OscalConverter {
             Control control = new Control();
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
-            control.setTitle(MarkupLine.fromMarkdown(elem.title));
+            if (elem.title != null && !elem.title.isEmpty()) {
+                control.setTitle(MarkupLine.fromMarkdown(elem.title));
+            }
 
             control.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
             control.addPart(buildPartFromElementText(elem, "statement"));
@@ -163,7 +149,7 @@ public class Csf20OscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, PARTY_ELEMENT_TYPE).map(elem -> {
             Property riskPartyProp = new Property();
             riskPartyProp.setName("risk-party");
-            riskPartyProp.setNs(URI.create(CSF_URI));
+            riskPartyProp.setNs(CSF_URI);
             riskPartyProp.setValue(elem.title);
             riskPartyProp.setRemarks(MarkupMultiline.fromMarkdown(elem.text));
             return riskPartyProp;

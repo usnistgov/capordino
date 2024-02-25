@@ -23,7 +23,7 @@ public class CprtApiClient {
     final HttpClient client = HttpClient.newHttpClient();
     final ObjectMapper objectMapper = new ObjectMapper();
 
-    CprtApiClient() {
+    public CprtApiClient() {
         objectMapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
         objectMapper.configure(Feature.AUTO_CLOSE_SOURCE, true);
     }
