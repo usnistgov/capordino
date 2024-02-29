@@ -1,0 +1,43 @@
+{
+  "$schema": "https://csrc.nist.gov/csrc/media/Projects/cprt/documents/schema/cprt_schema.json",
+  "documents": [
+    {
+      "doc_identifier": "Sample",
+      "name": "A sample CPRT sample",
+      "version": "Snapshot",
+      "website": "https://github.com/usnistgov/capordino"
+    }
+  ],
+  "relationship_types": [
+    {
+      "relationship_identifier": "related",
+      "description": "Represents a relationship between two elements."
+    }
+  ],
+  "elements": [
+    {
+      "doc_identifier": "Sample",
+      "element_identifier": "SampleElement",
+      "element_type": "SampleType",
+      "title": "Sample Element",
+      "text": "A sample element."
+    },
+    {
+      "doc_identifier": "Sample",
+      "element_identifier": "SampleElement2",
+      "element_type": "SampleType",
+      "title": "Sample Element 2",
+      "text": "Another sample element."
+    }
+  ],
+  "relationships": [
+    {
+      "source_doc_identifier": "Sample",
+      "source_element_identifier": "SampleElement",
+      "dest_doc_identifier": "Sample",
+      "dest_element_identifier": "SampleElement2",
+      "provenance_doc_identifier": "Sample",
+      "relationship_identifier": "related"
+    }
+  ]
+}
