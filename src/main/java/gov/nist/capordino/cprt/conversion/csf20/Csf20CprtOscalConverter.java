@@ -59,12 +59,18 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
         catalog.setGroups(buildFunctionGroups(catalog));
     }
 
-    private ControlPart buildPartFromElementText(CprtElement element, String name) {
+    protected ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
         elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
         elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
         return elementProse;
+    }
+
+    protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
+        ControlPart part = buildPartFromElementText(element, name);
+        part.setNs(namespace);
+        return part;
     }
 
     /**
@@ -121,9 +127,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             Control control = new Control();
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
-            if (elem.title != null && !elem.title.isEmpty()) {
-                control.setTitle(MarkupLine.fromMarkdown(elem.title));
-            }
+            control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
             control.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
             control.addPart(buildPartFromElementText(elem, "statement"));
@@ -141,7 +145,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
 
     private List<ControlPart> buildSubcategoryImplementationExamples(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            ControlPart part = buildPartFromElementText(elem, "example");
+            ControlPart part = buildPartFromElementText(elem, "example", CSF_URI);
             part.setId(elem.element_identifier);
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
