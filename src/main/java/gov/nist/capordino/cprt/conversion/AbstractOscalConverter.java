@@ -188,6 +188,7 @@ public abstract class AbstractOscalConverter {
 
         Role publisherRole = new Role();
         publisherRole.setId("publisher");
+        publisherRole.setTitle(MarkupLine.fromMarkdown("Publisher"));
         metadata.addRole(publisherRole);
 
         ResponsibleParty publisherResponsibleParty = new ResponsibleParty();
@@ -197,6 +198,7 @@ public abstract class AbstractOscalConverter {
 
         Role contactRole = new Role();
         contactRole.setId("contact");
+        contactRole.setTitle(MarkupLine.fromMarkdown("Contact"));
         metadata.addRole(contactRole);
 
         ResponsibleParty contactResponsibleParty = new ResponsibleParty();
