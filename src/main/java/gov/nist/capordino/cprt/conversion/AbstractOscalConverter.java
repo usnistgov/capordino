@@ -214,11 +214,30 @@ public abstract class AbstractOscalConverter {
 
     // Helpers
 
-    protected Stream<CprtElement> getRelatedElementsBySourceIdWithType(String sourceId, String type) {
+    protected Stream<CprtElement> getRelatedElementsBySourceIdWithType(String sourceId, String elemType) {
         return cprtRoot.getRelationships().stream()
             .filter(rel -> rel.getSourceGlobalIdentifier().equals(sourceId))
-            .map(rel -> cprtRoot.getElementById(rel.getDestGlobalIdentifier()))
-            .filter(elem -> elem.element_type.equals(type));
+            .map(rel -> {
+                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
+                if (element == null) {
+                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
+                }
+                return element;
+            })
+            .filter(elem -> elem.element_type.equals(elemType));
+    }
+
+    protected Stream<CprtElement> getRelatedElementsBySourceIdWithType(String sourceId, String elemType, String relationType) {
+        return cprtRoot.getRelationships().stream()
+            .filter(rel -> rel.getSourceGlobalIdentifier().equals(sourceId) && rel.relationship_identifier.equals(relationType))
+            .map(rel -> {
+                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
+                if (element == null) {
+                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
+                }
+                return element;
+            })
+            .filter(elem -> elem.element_type.equals(elemType));
     }
 
     /**
