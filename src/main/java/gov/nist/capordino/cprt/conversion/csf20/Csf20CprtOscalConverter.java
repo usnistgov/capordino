@@ -93,6 +93,8 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
                     group.addProp(sortProp);
                 }
 
+                group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
                 return group;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -115,6 +117,8 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
                 control.addProp(sortProp);
             }
 
+            control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -127,10 +131,19 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             Control control = new Control();
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
-            control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
-            control.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
-            control.addPart(buildPartFromElementText(elem, "statement"));
+            // CSF subcategories do not have titles, so use the identifier as the title
+            String title = elem.title;
+            if (title == null || title.isEmpty()) {
+                title = elem.element_identifier;
+            }
+            control.setTitle(MarkupLine.fromMarkdown(title));
+
+            // Examples should follow statement
+            ArrayList<ControlPart> parts = new ArrayList<ControlPart>();
+            parts.add(buildPartFromElementText(elem, "statement"));
+            parts.addAll(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
+            control.setParts(parts);
 
             control.setProps(buildSubcategoryRiskPartyProps(elem.getGlobalIdentifier()));
 
@@ -138,6 +151,8 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             if (sortProp != null) {
                 control.addProp(sortProp);
             }
+
+            control.addProp(buildLabelProp(elem.element_identifier));
 
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
