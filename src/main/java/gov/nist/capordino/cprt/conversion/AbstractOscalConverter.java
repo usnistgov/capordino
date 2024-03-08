@@ -32,6 +32,7 @@ import gov.nist.secauto.oscal.lib.model.Metadata.Role;
 public abstract class AbstractOscalConverter {
     protected final CprtMetadataVersion cprtMetadataVersion;
     protected final CprtRoot cprtRoot;
+    protected final String CAPORDINO_CONTACT_EMAIL = "capordino@nist.gov";
 
     /**
      * The URI to use for CPRT-specific props.
@@ -130,7 +131,7 @@ public abstract class AbstractOscalConverter {
         return link;
     }
 
-    private Party buildNistParty() {
+    private Party buildPublisherParty() {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
         party.setName("National Institute of Standards and Technology");
@@ -147,14 +148,20 @@ public abstract class AbstractOscalConverter {
         address.setPostalCode("20899-2000");
 
         party.addAddress(address);
-
-        if (cprtMetadataVersion.pocEmailAddress != null && cprtMetadataVersion.pocEmailAddress != "") {
-            party.addEmailAddress(cprtMetadataVersion.pocEmailAddress);
-        }
+        party.addEmailAddress(CAPORDINO_CONTACT_EMAIL);
         return party;
     }
 
-    private Metadata buildMetadata(Catalog catalog) {
+    private Party buildAuthorParty() {
+        Party party = new Party();
+        party.setUuid(UUID.randomUUID());
+        party.setType("organization");
+
+        party.addEmailAddress(cprtMetadataVersion.pocEmailAddress);
+        return party;
+    }
+
+    private Metadata buildMetadata(@Nonnull Catalog catalog) {
         Metadata metadata = new Metadata();
         metadata.setOscalVersion("v1.1.2");
         metadata.setLastModified(ZonedDateTime.now());
@@ -174,17 +181,27 @@ public abstract class AbstractOscalConverter {
         metadata.setPublished(dateToZonedDateTime(cprtMetadataVersion.publicationReleaseDate));
 
         // Add website link
-        Resource frameworkVersionLinkResource = new Resource();
-        frameworkVersionLinkResource.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
-        Rlink frameworkVersionWebsiteRlink = new Rlink();
-        frameworkVersionWebsiteRlink.setHref(URI.create(cprtMetadataVersion.frameworkWebSite));
-        frameworkVersionWebsiteRlink.setMediaType("application/html");
-        frameworkVersionLinkResource.addRlink(frameworkVersionWebsiteRlink);
-        metadata.addLink(newLinkRel(catalog, frameworkVersionLinkResource, "alternate"));
+        Resource frameworkLinkResource = new Resource();
+        frameworkLinkResource.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
+        Rlink frameworkWebsiteRlink = new Rlink();
+        frameworkWebsiteRlink.setHref(URI.create(cprtMetadataVersion.frameworkWebSite));
+        frameworkWebsiteRlink.setMediaType("application/html");
+        frameworkLinkResource.addRlink(frameworkWebsiteRlink);
+        metadata.addLink(newLinkRel(catalog, frameworkLinkResource, "alternate"));
+
+        if (cprtMetadataVersion.frameworkVersionWebSite != null && !cprtMetadataVersion.frameworkVersionWebSite.isEmpty()) {
+            Resource frameworkVersionLinkResource = new Resource();
+            frameworkVersionLinkResource.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
+            Rlink frameworkVersionWebsiteRlink = new Rlink();
+            frameworkVersionWebsiteRlink.setHref(URI.create(cprtMetadataVersion.frameworkVersionWebSite));
+            frameworkVersionWebsiteRlink.setMediaType("application/html");
+            frameworkVersionLinkResource.addRlink(frameworkVersionWebsiteRlink);
+            metadata.addLink(newLinkRel(catalog, frameworkVersionLinkResource, "canonical"));
+        }
 
         // Add party information
-        Party nistParty = buildNistParty();
-        metadata.addParty(nistParty);
+        Party publisherParty = buildPublisherParty();
+        metadata.addParty(publisherParty);
 
         Role publisherRole = new Role();
         publisherRole.setId("publisher");
@@ -193,7 +210,7 @@ public abstract class AbstractOscalConverter {
 
         ResponsibleParty publisherResponsibleParty = new ResponsibleParty();
         publisherResponsibleParty.setRoleId(publisherRole.getId());
-        publisherResponsibleParty.addPartyUuid(nistParty.getUuid());
+        publisherResponsibleParty.addPartyUuid(publisherParty.getUuid());
         metadata.addResponsibleParty(publisherResponsibleParty);
 
         Role contactRole = new Role();
@@ -203,9 +220,24 @@ public abstract class AbstractOscalConverter {
 
         ResponsibleParty contactResponsibleParty = new ResponsibleParty();
         contactResponsibleParty.setRoleId(contactRole.getId());
-        contactResponsibleParty.addPartyUuid(nistParty.getUuid());
+        contactResponsibleParty.addPartyUuid(publisherParty.getUuid());
         metadata.addResponsibleParty(contactResponsibleParty);
-        
+
+        if (cprtMetadataVersion.pocEmailAddress != null && !cprtMetadataVersion.pocEmailAddress.isEmpty()) {
+            Party authorParty = buildAuthorParty();
+            metadata.addParty(authorParty);
+    
+            Role authorRole = new Role();
+            authorRole.setId("author");
+            authorRole.setTitle(MarkupLine.fromMarkdown("Author"));
+            metadata.addRole(authorRole);
+    
+            ResponsibleParty authorResponsibleParty = new ResponsibleParty();
+            authorResponsibleParty.setRoleId(authorRole.getId());
+            authorResponsibleParty.addPartyUuid(authorParty.getUuid());
+            metadata.addResponsibleParty(authorResponsibleParty);
+        }
+
         return metadata;
     }
 
@@ -247,5 +279,12 @@ public abstract class AbstractOscalConverter {
      */
     protected String escapeSquareBrackets(String input) {
         return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
+    }
+
+    protected Property buildLabelProp(String label) {
+        Property labelProp = new Property();
+        labelProp.setName("label");
+        labelProp.setValue(label);
+        return labelProp;
     }
 }
