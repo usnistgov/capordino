@@ -85,7 +85,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
-                group.addPart(buildPartFromElementText(elem, "overview"));
+                group.addPart(buildPartFromElementText(elem, "instruction"));
                 group.setControls(buildCategoryControls(catalog, elem.getGlobalIdentifier()));
 
                 Property sortProp = buildSortProp(elem.getGlobalIdentifier());
