@@ -1,13 +1,15 @@
 package gov.nist.capordino.cprt.cli;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Date;
 
 import com.cyberesicg.oscal_cprt.gui.MainGuiFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import gov.nist.capordino.cprt.api.CprtApiClient;
+import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
@@ -31,6 +33,11 @@ public class Capordino implements Runnable {
     // @Option(names = { "-src", "--source" }, description = "Source framework", required = true)
     // private boolean source;
 
+    // If desired, specify file path for framework json
+    @Option(names = { "-f", "--file" }, description = "File path for framework json")
+    private boolean file;
+
+    // File path if -f option is used
     @Parameters(paramLabel = "<file path>", 
                description = "File path for framework json")
     private String filepath; // = "src/test/resources/cprt_csf20_sample.json";
@@ -57,18 +64,32 @@ public class Capordino implements Runnable {
         System.out.println("Saving output to: " + tempOutDirectory.toString());
 
         ObjectMapper mapper = new ObjectMapper();
-        CprtRoot root = mapper.readValue(csfCprtSample, CprtRoot.class);
+        
+         // Convert CSF 20 to OSCAL
+         CprtApiClient client = new CprtApiClient();
 
-        // Take in framework version from CLI
-        CprtMetadataVersion version = new CprtMetadataVersion();
-        version.frameworkVersionIdentifier = framework_version_identifier;
+        try {
+            CprtRoot root = mapper.readValue(csfCprtSample, CprtRoot.class);
 
-        // Convert CSF 20 sample to OSCAL
-        Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version, root);
-        Catalog catalog = converter.buildCatalog();
-        ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-        serializer.serialize(catalog, sampleOutFilePath);
-        bindingContext.loadCatalog(sampleOutFilePath);
+            // Take in framework version from CLI
+            CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+
+            Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
+            Catalog catalog = converter.buildCatalog();
+
+            // Write to a file and load again to ensure the serialization and deserialization works
+            ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
+            serializer.serialize(catalog, csf20OutFilePath);
+            bindingContext.loadCatalog(csf20OutFilePath);
+        } catch (IOException | InterruptedException ie) {
+            ie.printStackTrace();
+        } catch (InvalidFrameworkIdentifier ifi) {
+            // Additional handling of InvalidFrameworkIdentifer
+
+            ifi.printStackTrace();
+        }
+        
+        
     }
 
     public static void main(String[] args) {
