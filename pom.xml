@@ -141,7 +141,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.cyberesicg.oscal_cprt.gui.MainGuiFrame</mainClass>
+              <mainClass>gov.nist.capordino.cprt.cli.Capordino</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

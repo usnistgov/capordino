@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Date;
 
 import com.cyberesicg.oscal_cprt.gui.MainGuiFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,13 +35,13 @@ public class Capordino implements Runnable {
     // private boolean source;
 
     // If desired, specify file path for framework json
-    @Option(names = { "-f", "--file" }, description = "File path for framework json")
-    private boolean file;
+    // @Option(names = { "-f", "--file" }, description = "File path for framework json")
+    // private boolean file;
 
     // File path if -f option is used
-    @Parameters(paramLabel = "<file path>", 
-               description = "File path for framework json")
-    private String filepath; // = "src/test/resources/cprt_csf20_sample.json";
+    // @Parameters(paramLabel = "<file path>", 
+            //    description = "File path for framework json")
+    private String filepath = "src/test/resources/cprt_csf20_sample.json";
 
     // Framework version identifier to build catalog
     @Parameters(paramLabel = "<framework version identifier>")
@@ -55,7 +56,7 @@ public class Capordino implements Runnable {
 
         OscalBindingContext bindingContext = OscalBindingContext.instance();
 
-        String tempOutDirectoryString = "src/test/output";
+        String tempOutDirectoryString = "src/test/resources";
         Path tempOutDirectory = FileSystems.getDefault().getPath(tempOutDirectoryString);
 
         Path sampleOutFilePath = tempOutDirectory.resolve("csf20-sample_catalog.xml");
@@ -66,13 +67,23 @@ public class Capordino implements Runnable {
         ObjectMapper mapper = new ObjectMapper();
         
          // Convert CSF 20 to OSCAL
-         CprtApiClient client = new CprtApiClient();
+        CprtApiClient client = new CprtApiClient();
+        CprtMetadataVersion version = new CprtMetadataVersion();
+        version.name = "Cybersecurity Framework";
+        version.frameworkIdentifier = "CSF";
+        version.frameworkWebSite = "https://www.nist.gov/cyberframework";
+        version.frameworkVersionIdentifier = "CSF_2_0_0";
+        version.interfaceIdentifier = "CSF_2";
+        version.frameworkVersionName = "The NIST Cybersecurity Framework 2.0 Draft (SAMPLE)";
+        version.shortName = "Cybersecurity Framework v2.0 SAMPLE";
+        version.version = "Version 2.0.0";
+        version.publicationReleaseDate = new Date();
 
         try {
             CprtRoot root = mapper.readValue(csfCprtSample, CprtRoot.class);
 
             // Take in framework version from CLI
-            CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+            version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
 
             Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
             Catalog catalog = converter.buildCatalog();

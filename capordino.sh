@@ -1,2 +1,2 @@
 # bin/capordino.sh
-java -jar target/jar-with-dependencies.jar $@
+java -jar target/capordino.jar $@
