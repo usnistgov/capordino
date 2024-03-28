@@ -3,6 +3,11 @@ package gov.nist.capordino.cprt.pojo;
 import java.util.ArrayList;
 import java.util.Date;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CprtMetadataVersion {
     public String name;
     public String frameworkIdentifier;
