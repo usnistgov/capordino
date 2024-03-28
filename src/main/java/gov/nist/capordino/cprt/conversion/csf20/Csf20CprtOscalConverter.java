@@ -47,6 +47,8 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
     private final String IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE = "implementation_example";
     private final String PARTY_ELEMENT_TYPE = "party";
 
+    private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
+
     /**
      * The URI to use for CSF-specific props.
      */
@@ -57,12 +59,18 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
         catalog.setGroups(buildFunctionGroups(catalog));
     }
 
-    private ControlPart buildPartFromElementText(CprtElement element, String name) {
+    protected ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
         elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
         elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
         return elementProse;
+    }
+
+    protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
+        ControlPart part = buildPartFromElementText(element, name);
+        part.setNs(namespace);
+        return part;
     }
 
     /**
@@ -77,13 +85,15 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
-                group.addPart(buildPartFromElementText(elem, "overview"));
-                group.setGroups(buildCategoryGroups(catalog, elem.getGlobalIdentifier()));
+                group.addPart(buildPartFromElementText(elem, "instruction"));
+                group.setControls(buildCategoryControls(catalog, elem.getGlobalIdentifier()));
 
                 Property sortProp = buildSortProp(elem.getGlobalIdentifier());
                 if (sortProp != null) {
                     group.addProp(sortProp);
                 }
+
+                group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 return group;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -92,22 +102,24 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
     /**
      * Build the second level group of the catalog, represented in CPRT as categories.
      */
-    private List<CatalogGroup> buildCategoryGroups(Catalog catalog, String parentId) {
-        return getRelatedElementsBySourceIdWithType(parentId, CATEGORY_ELEMENT_TYPE).map(elem -> {
-            CatalogGroup group = new CatalogGroup();
-            group.setId(elem.element_identifier);
-            group.setClazz(elem.element_type);
-            group.setTitle(MarkupLine.fromMarkdown(elem.title));
+    private List<Control> buildCategoryControls(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, CATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Control control = new Control();
+            control.setId(elem.element_identifier);
+            control.setClazz(elem.element_type);
+            control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
-            group.addPart(buildPartFromElementText(elem, "overview"));
-            group.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
+            control.addPart(buildPartFromElementText(elem, "statement"));
+            control.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
 
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
             if (sortProp != null) {
-                group.addProp(sortProp);
+                control.addProp(sortProp);
             }
 
-            return group;
+            control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
+            return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
@@ -115,16 +127,23 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
      * Build the third level control of the catalog, represented in CPRT as subcategories.
      */
     private List<Control> buildSubcategoryControls(Catalog catalog, String parentId) {
-        return getRelatedElementsBySourceIdWithType(parentId, SUBCATEGORY_ELEMENT_TYPE).map(elem -> {
+        return getRelatedElementsBySourceIdWithType(parentId, SUBCATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
-            if (elem.title != null && !elem.title.isEmpty()) {
-                control.setTitle(MarkupLine.fromMarkdown(elem.title));
-            }
 
-            control.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
-            control.addPart(buildPartFromElementText(elem, "statement"));
+            // CSF subcategories do not have titles, so use the identifier as the title
+            String title = elem.title;
+            if (title == null || title.isEmpty()) {
+                title = elem.element_identifier;
+            }
+            control.setTitle(MarkupLine.fromMarkdown(title));
+
+            // Examples should follow statement
+            ArrayList<ControlPart> parts = new ArrayList<ControlPart>();
+            parts.add(buildPartFromElementText(elem, "statement"));
+            parts.addAll(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
+            control.setParts(parts);
 
             control.setProps(buildSubcategoryRiskPartyProps(elem.getGlobalIdentifier()));
 
@@ -133,20 +152,22 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
                 control.addProp(sortProp);
             }
 
+            control.addProp(buildLabelProp(elem.element_identifier));
+
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<ControlPart> buildSubcategoryImplementationExamples(Catalog catalog, String parentId) {
-        return getRelatedElementsBySourceIdWithType(parentId, IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE).map(elem -> {
-            ControlPart part = buildPartFromElementText(elem, "example");
+        return getRelatedElementsBySourceIdWithType(parentId, IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart part = buildPartFromElementText(elem, "example", CSF_URI);
             part.setId(elem.element_identifier);
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<Property> buildSubcategoryRiskPartyProps(String parentId) {
-        return getRelatedElementsBySourceIdWithType(parentId, PARTY_ELEMENT_TYPE).map(elem -> {
+        return getRelatedElementsBySourceIdWithType(parentId, PARTY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Property riskPartyProp = new Property();
             riskPartyProp.setName("risk-party");
             riskPartyProp.setNs(CSF_URI);
@@ -157,7 +178,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
     }
 
     private Property buildSortProp(String parentId) {
-        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         if (sorts.size() == 0) {
             return null;
         }
