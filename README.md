@@ -37,28 +37,25 @@ chmod u+x capordino.sh
 ### Running Capordino CLI
 
 #### Basic template to run capordino.sh
-`./capordino.sh <arguments>`
-
 Use --help to see the available options.
-
 `./capordino.sh --help`
 ```
-Usage: capordino [-hV] <framework version identifier> [COMMAND]
+Usage: capordino [-hV] [-o=<output_directory>] <framework version identifier>
+                 [COMMAND]
       <framework version identifier>
-
+                  Framework version identifier to build catalog for
   -h, --help      Show this help message and exit.
+  -o, --output-directory=<output_directory>
+                  Directory for capordino tool output (built catalog), default
+                    is "src/test/resources"
   -V, --version   Print version information and exit.
 Commands:
   gui  Runs capordino GUI instead of CLI
 ```
 
-#### Arguments:
-Framework version identifier - Framework version to build a catalog for, written as a string
-
 ```bash
-./capordino.sh "CSF_2_0_0"
+./capordino.sh -o "src/test/resources" "CSF_2_0_0"
 ```
 
-
-#### Output:
-The built catalog is written to `src/test/resources`
+#### Output
+The built catalog is written to specified directory or "src/test/resources" by default.

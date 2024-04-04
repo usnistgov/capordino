@@ -44,8 +44,14 @@ public class Capordino implements Runnable {
     private String filepath = "src/test/resources/cprt_csf20_sample.json";
 
     // Framework version identifier to build catalog
-    @Parameters(paramLabel = "<framework version identifier>")
+    @Parameters(paramLabel = "<framework version identifier>",
+                description = "Framework version identifier to build catalog for, REQUIRED")
     private String framework_version_identifier; // = "CSF_2_0_0";
+
+    // Output directory
+    @Option(names = {"-o", "--output-directory"}, defaultValue = "src/test/resources",
+                description = "Directory for capordino tool output (built catalog), default is \"src/test/resources\"")
+    private String output_directory; // = "src/test/resources";
 
     @Override
     public void run() { 
@@ -56,8 +62,7 @@ public class Capordino implements Runnable {
 
         OscalBindingContext bindingContext = OscalBindingContext.instance();
 
-        String tempOutDirectoryString = "src/test/resources";
-        Path tempOutDirectory = FileSystems.getDefault().getPath(tempOutDirectoryString);
+        Path tempOutDirectory = FileSystems.getDefault().getPath(output_directory);
 
         Path sampleOutFilePath = tempOutDirectory.resolve("csf20-sample_catalog.xml");
         Path csf20OutFilePath = tempOutDirectory.resolve("csf20_catalog.xml");
