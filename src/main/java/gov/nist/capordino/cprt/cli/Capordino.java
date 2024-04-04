@@ -66,7 +66,7 @@ public class Capordino implements Runnable {
 
         ObjectMapper mapper = new ObjectMapper();
         
-         // Convert CSF 20 to OSCAL
+        //Convert CSF 20 to OSCAL
         CprtApiClient client = new CprtApiClient();
         CprtMetadataVersion version = new CprtMetadataVersion();
         version.name = "Cybersecurity Framework";
@@ -85,13 +85,14 @@ public class Capordino implements Runnable {
             // Take in framework version from CLI
             version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
 
+            // Build catalog
             Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
             Catalog catalog = converter.buildCatalog();
 
-            // Write to a file and load again to ensure the serialization and deserialization works
+            // Serialize and write catalog to a file
             ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
             serializer.serialize(catalog, csf20OutFilePath);
-            bindingContext.loadCatalog(csf20OutFilePath);
+
         } catch (IOException | InterruptedException ie) {
             ie.printStackTrace();
         } catch (InvalidFrameworkIdentifier ifi) {
