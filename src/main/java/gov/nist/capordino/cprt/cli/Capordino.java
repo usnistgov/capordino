@@ -6,7 +6,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Date;
 
-import com.cyberesicg.oscal_cprt.gui.MainGuiFrame;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
@@ -18,14 +17,13 @@ import gov.nist.secauto.metaschema.binding.io.Format;
 import gov.nist.secauto.metaschema.binding.io.ISerializer;
 import gov.nist.secauto.oscal.lib.OscalBindingContext;
 import gov.nist.secauto.oscal.lib.model.Catalog;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "capordino", version = "Capordino 1.0", mixinStandardHelpOptions = true,
-    subcommands = { CapordinoGUI.class }
-    ) 
+@Command(name = "capordino", version = "Capordino 1.0", mixinStandardHelpOptions = true) 
 public class Capordino implements Runnable { 
     // Specify source or target
     // @Option(names = { "-tgt", "--target" }, description = "Target framework", required = true)
@@ -112,18 +110,5 @@ public class Capordino implements Runnable {
     public static void main(String[] args) {
         int exitCode = new CommandLine(new Capordino()).execute(args); 
         System.exit(exitCode); 
-    }
-}
-
-
-
-@Command(name = "gui",
-  description = "Runs capordino GUI instead of CLI") 
-class CapordinoGUI implements Runnable {
-
-    @Override
-    public void run() {
-        // Run MainGuiFrame.java
-        MainGuiFrame.main(null);
     }
 }

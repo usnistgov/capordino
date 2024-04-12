@@ -41,16 +41,13 @@ Use --help to see the available options.
 `./capordino.sh --help`
 ```
 Usage: capordino [-hV] [-o=<output_directory>] <framework version identifier>
-                 [COMMAND]
       <framework version identifier>
-                  Framework version identifier to build catalog for
+                  Framework version identifier to build catalog for, REQUIRED
   -h, --help      Show this help message and exit.
   -o, --output-directory=<output_directory>
                   Directory for capordino tool output (built catalog), default
                     is "src/test/resources"
   -V, --version   Print version information and exit.
-Commands:
-  gui  Runs capordino GUI instead of CLI
 ```
 
 ```bash
