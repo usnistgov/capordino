@@ -20,6 +20,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>info.picocli</groupId>
+      <artifactId>picocli</artifactId>
+      <version>4.7.5</version>
+    </dependency>
+    <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>4.13.1</version>
@@ -136,7 +141,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.cyberesicg.oscal_cprt.gui.MainGuiFrame</mainClass>
+              <mainClass>gov.nist.capordino.cprt.cli.Capordino</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
