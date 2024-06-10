@@ -2,13 +2,27 @@
 
 Development of tooling to allow conversion of datasets managed by the [Cybersecurity and Privacy Reference Tool (CPRT)](https://csrc.nist.gov/projects/cprt) into [OSCAL](https://www.nist.gov/OSCAL) formats. 
 
-Currently, the command line tool supports creating CSF 2.0 catalog. 
+Currently, the command line tool supports generating CSF 2.0 catalog. 
 
 ### Building
+#### Clone the git repository
+```bash
+git clone https://github.com/usnistgov/capordino.git
+cd capordino/
+```
+
+#### Container environment
+If you would like to develop/run this tool in a Docker container (easier management of dependencies), follow these steps. Otherwise, skip to [Installing Maven](#installing-maven).
+* Install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+* Install [Visual Studio Code](https://code.visualstudio.com/) and its Dev Containers extension 
+* Press F1 to open Command Palette - Dev Containers: Open Folder in Container
+* Choose your cloned capordino repository
+* Open a new Terminal within Visual Studio Code
+* All subsequent commands should be run in this terminal
+
+
+#### Installing Maven
 The tool requires [Apache Maven](https://maven.apache.org/) version 3.9 or greater.
-
-#### Instructions on installing Maven
-
 1. Check if JDK 8 or above is installed (requirement for Maven 3.9+)
 ```bash
 java --version
@@ -17,19 +31,13 @@ java --version
 
 3. Follow these [instructions](https://maven.apache.org/install.html) to install Maven.
 
-#### Instructions on installing Capordino tool
-1. Clone the git repository
-```bash
-git clone https://github.com/usnistgov/capordino.git
-cd capordino/
-```
-
-2. Use Maven to install dependencies and build
+#### Installing Capordino
+1. Use Maven to install dependencies and build
 ```bash
 mvn install
 ```
 
-3. A shell script `capordino.sh` is provided to simplify running the Capordino tool. Change file permissions to make it executable.
+2. A shell script `capordino.sh` is provided to simplify running the Capordino tool. Change file permissions to make it executable.
 ```bash
 chmod u+x capordino.sh
 ```
