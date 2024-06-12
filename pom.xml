@@ -4,7 +4,7 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.cyberesicg</groupId>
+  <groupId>gov.nist</groupId>
   <artifactId>oscal_cprt</artifactId>
   <version>1.0-SNAPSHOT</version>
 
@@ -102,20 +102,6 @@
         <configuration>
           <source>11</source>
           <target>11</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <!-- Build an executable JAR -->
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>3.1.0</version>
-        <configuration>
-          <archive>
-            <manifest>
-              <addClasspath>true</addClasspath>
-              <mainClass>com.cyberesicg.oscal_cprt.gui.MainGuiFrame</mainClass>
-            </manifest>
-          </archive>
         </configuration>
       </plugin>
       <plugin>
