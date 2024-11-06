@@ -20,6 +20,7 @@ import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
 import gov.nist.secauto.oscal.lib.model.Address;
 import gov.nist.secauto.oscal.lib.model.BackMatter;
 import gov.nist.secauto.oscal.lib.model.Catalog;
+import gov.nist.secauto.oscal.lib.model.ControlPart;
 import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.Metadata;
 import gov.nist.secauto.oscal.lib.model.Property;
@@ -274,6 +275,33 @@ public abstract class AbstractOscalConverter {
             .filter(elem -> elem.element_type.equals(elemType));
     }
 
+    // Used to get the control a withdrawn control refers to
+    protected Stream<CprtElement> getRelatedElementsByDestinationIdWithType(String sourceId, String elemType) {
+        return cprtRoot.getRelationships().stream()
+            .filter(rel -> rel.getDestGlobalIdentifier().equals(sourceId))
+            .map(rel -> {
+                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
+                if (element == null) {
+                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
+                }
+                return element;
+            })
+            .filter(elem -> elem.element_type.equals(elemType));
+    }
+
+    protected Stream<CprtElement> getRelatedElementsByDestinationIdWithType(String sourceId, String elemType, String relationType) {
+        return cprtRoot.getRelationships().stream()
+            .filter(rel -> rel.getDestGlobalIdentifier().equals(sourceId) && rel.relationship_identifier.equals(relationType))
+            .map(rel -> {
+                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
+                if (element == null) {
+                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
+                }
+                return element;
+            })
+            .filter(elem -> elem.element_type.equals(elemType));
+    }
+
     /**
      * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
      */
@@ -281,10 +309,65 @@ public abstract class AbstractOscalConverter {
         return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
     }
 
-    protected Property buildLabelProp(String label) {
-        Property labelProp = new Property();
-        labelProp.setName("label");
-        labelProp.setValue(label);
-        return labelProp;
+    protected Property buildProp(String name, String value) {
+        Property prop = new Property();
+        prop.setName(name);
+        prop.setValue(value);
+        return prop;
     }
+
+    protected Property buildLabelProp(String label) {
+        return buildProp("label", label);
+    }
+
+    protected Property buildWithdrawnProp() {
+        return buildProp("status", "withdrawn");
+    }
+
+    
+
+    protected ControlPart buildPartFromElementText(CprtElement element, String name) {
+        ControlPart elementProse = new ControlPart();
+        elementProse.setId(element.element_identifier + "_" + name);
+        elementProse.setName(name);
+        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
+        return elementProse;
+    }
+
+    protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
+        ControlPart part = buildPartFromElementText(element, name);
+        part.setNs(namespace);
+        return part;
+    }
+
+    // Builds a Part for Assessment Methods
+    protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix) {
+        ControlPart part = new ControlPart();
+        part.setName("assessment-method");
+        part.setId(element.element_identifier + "_" + part.getName() + "_" + element.element_type);
+        part.addProp(buildProp("method", element.element_type.toUpperCase()));
+
+        // Assessment Methods contain Assessment Objects
+        ControlPart objects = new ControlPart();
+        objects.setName("assessment-objects");
+
+        // Assessment Objects in CPRT are written as "[SELECT FROM: object1; object2; ... objectz]" in element.text
+        // In OSCAL, each object should be its own <p>
+        
+        // Remove the prefix, "[SELECT FROM: " and the suffix, "]"
+        int suffix_index = element.text.indexOf(suffix);
+        String object_list = element.text.substring(prefix.length(), suffix_index);
+
+        // Each object is separated by ";" 
+        // Convert the separator to two newlines, because fromMarkdown() converts two newlines to <p>
+        String final_object_list = object_list.replaceAll(separator, "\n\n");
+
+        objects.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(final_object_list)));
+
+        // Nest assessment objects within assessment method
+        part.addPart(objects);
+
+        return part;
+    }
+
 }

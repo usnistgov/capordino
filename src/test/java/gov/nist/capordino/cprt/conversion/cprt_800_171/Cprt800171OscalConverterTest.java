@@ -38,7 +38,7 @@ public class Cprt800171OscalConverterTest {
     /**
      * A CPRT file that contains a subset of 800-171 content.
      */
-    final static File Cprt800171Sample = new File("src/test/resources/cprt_800-171r3.json");
+    final static File Cprt800171Sample = new File("src/test/resources/cprt_800-171r3_sample.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;

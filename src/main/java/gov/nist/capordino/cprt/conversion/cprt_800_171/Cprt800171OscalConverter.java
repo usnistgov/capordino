@@ -122,22 +122,44 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
                 }
             }
             else {
-                control.setTitle(MarkupLine.fromMarkdown(elem.title));
+                control.setTitle(MarkupLine.fromMarkdown(elem.title));                
 
+                // Assessment methods and objects
+                control.setParts(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
 
-                control.addPart(buildPartFromElementText(elem, "statement"));
+                
+
                 // For 800-171 security requirement, create OSCAL control
                 control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
-
-
-                //build discussion, examine, etc.
-
+                
+                control.addPart(buildPartFromElementText(elem, "statement"));
                 control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
             }
             
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
+
+    // Assessment methods are EXAMINE, INTERVIEW, TEST
+    private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
+        ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        examine_parts.addAll(interview_parts);
+        examine_parts.addAll(test_parts);
+
+        return examine_parts;
+    }
+    
 
     private List<Link> createWithdrawnLink(Catalog catalog, String parentId) {
         ArrayList<String> incorporated_identifiers = getRelatedElementsByDestinationIdWithType(parentId, REQUIREMENT_ELEMENT_TYPE).map(elem -> {
