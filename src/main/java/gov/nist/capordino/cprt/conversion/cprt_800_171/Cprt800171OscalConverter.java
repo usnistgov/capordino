@@ -124,18 +124,18 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
                 }
             }
             else {
-                control.setTitle(MarkupLine.fromMarkdown(elem.title));                
-
-                // Assessment methods and objects
-                control.setParts(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
-
+                control.setTitle(MarkupLine.fromMarkdown(elem.title));       
                 
+                control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
+                List<ControlPart> parts = new ArrayList<ControlPart>();
+                parts.add(buildPartFromElementText(elem, "statement"));
+                // Assessment methods and objects
+                parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
+                control.setParts(parts);
 
                 // For 800-171 security requirement, create OSCAL control
                 control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
-
-                control.addPart(buildPartFromElementText(elem, "statement"));
-                control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
             }
             
             return control;
