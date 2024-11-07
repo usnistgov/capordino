@@ -61,6 +61,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
     private final String INCORPORATED_INTO_RELATIONSHIP_TYPE = "incorporated_into";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
     private final String ADDRESSED_BY_RELATIONSHIP_TYPE = "addressed_by";
+    private final String[] WITHDRAW_RELATIONSHIPS = new String[] {INCORPORATED_INTO_RELATIONSHIP_TYPE, ADDRESSED_BY_RELATIONSHIP_TYPE};
 
     /**
      * The URI to use for CSF-specific props.
@@ -111,11 +112,12 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
             control.setClazz(elem.element_type);
             
 
-            // If title is blank, then this group is withdrawn
+            // If title is blank, then this control is withdrawn
             if (elem.title.isEmpty()) {
                 control.addProp(buildWithdrawnProp());
 
-                List<Link> links = createWithdrawnLink(catalog, elem.getGlobalIdentifier());
+                // Create links to the control(s) this withdrawn control points to
+                List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
 
                 for (Link link : links) {
                     control.addLink(link);
@@ -131,7 +133,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
                 // For 800-171 security requirement, create OSCAL control
                 control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
-                
+
                 control.addPart(buildPartFromElementText(elem, "statement"));
                 control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
             }
@@ -159,25 +161,49 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
         return examine_parts;
     }
-    
 
-    private List<Link> createWithdrawnLink(Catalog catalog, String parentId) {
-        ArrayList<String> incorporated_identifiers = getRelatedElementsByDestinationIdWithType(parentId, REQUIREMENT_ELEMENT_TYPE).map(elem -> {
+    // Get the destination identifier of a given withdraw_reason element (get the control a withdrawn control points to)
+    private List<String> getDestWithdrawIdentifiers(String parentId, String relationType) {
+        List<String> dest_withdraw_identifiers = getDestinationIdWithType(parentId, relationType).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        return dest_withdraw_identifiers;
+        
+    }
+    
+    // Create links to the control(s) a given withdrawn control points to
+    private List<Link> createWithdrawnLinks(Catalog catalog, String parentId) {
+        // Get the withdraw_reason element associated with the given element
+        List<String> withdraw_identifiers = getRelatedElementsBySourceIdWithType(parentId, WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             return elem.element_identifier;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-        // incorporated_into and addressed_by separate?
-        // ArrayList<String> addressed_identifiers = getRelatedElementsByDestinationIdWithType(parentId, REQUIREMENT_ELEMENT_TYPE, ADDRESSED_BY_RELATIONSHIP_TYPE).map(elem -> {
-        //     return elem.element_identifier;
-        // }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-
-        // incorporated_identifiers.addAll(addressed_identifiers);
-        
         List<Link> links = new ArrayList<Link>();
-        for (String identifier : incorporated_identifiers) {
+        
+        // For each withdraw relationship type, create links of that type
+        for (String relationType : WITHDRAW_RELATIONSHIPS) {
+            List<String> dest_withdraw_identifiers = new ArrayList<String>();
+
+            // Get the control a withdrawn control points to
+            for (String withdraw_identifier : withdraw_identifiers) {
+                dest_withdraw_identifiers.addAll(getDestWithdrawIdentifiers(withdraw_identifier, relationType));
+            }
+
+            links.addAll(createLinks(dest_withdraw_identifiers, relationType));
+        }
+
+        return links;
+    }
+
+    // Create a list of relative Links
+    private List<Link> createLinks(List<String> identifiers, String relationType) {
+        List<Link> links = new ArrayList<Link>();
+
+        for (String identifier : identifiers) {
             Link link = new Link();
             link.setHref(URI.create(identifier));
-            link.setRel(INCORPORATED_INTO_RELATIONSHIP_TYPE);
+            link.setRel(relationType);
             links.add(link);
         }
 

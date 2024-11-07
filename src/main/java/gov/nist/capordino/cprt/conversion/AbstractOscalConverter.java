@@ -275,31 +275,14 @@ public abstract class AbstractOscalConverter {
             .filter(elem -> elem.element_type.equals(elemType));
     }
 
-    // Used to get the control a withdrawn control refers to
-    protected Stream<CprtElement> getRelatedElementsByDestinationIdWithType(String sourceId, String elemType) {
+    // Given a source element identifier and a relationship type, find all of its destination element identifiers
+    // Useful to get the control a withdrawn control points to
+    protected Stream<String> getDestinationIdWithType(String sourceId, String relationType) {
         return cprtRoot.getRelationships().stream()
-            .filter(rel -> rel.getDestGlobalIdentifier().equals(sourceId))
+            .filter(rel -> rel.source_element_identifier.equals(sourceId) && rel.relationship_identifier.equals(relationType))
             .map(rel -> {
-                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
-                if (element == null) {
-                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
-                }
-                return element;
-            })
-            .filter(elem -> elem.element_type.equals(elemType));
-    }
-
-    protected Stream<CprtElement> getRelatedElementsByDestinationIdWithType(String sourceId, String elemType, String relationType) {
-        return cprtRoot.getRelationships().stream()
-            .filter(rel -> rel.getDestGlobalIdentifier().equals(sourceId) && rel.relationship_identifier.equals(relationType))
-            .map(rel -> {
-                CprtElement element = cprtRoot.getElementById(rel.getDestGlobalIdentifier());
-                if (element == null) {
-                    throw new IllegalArgumentException("Error getting elements related to sourceId " + sourceId + ". Destination identifier " + rel.getDestGlobalIdentifier() + " not found");
-                }
-                return element;
-            })
-            .filter(elem -> elem.element_type.equals(elemType));
+                return rel.dest_element_identifier;
+            });
     }
 
     /**
