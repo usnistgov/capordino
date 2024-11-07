@@ -130,8 +130,11 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
                 List<ControlPart> parts = new ArrayList<ControlPart>();
                 parts.add(buildPartFromElementText(elem, "statement"));
+                // CPRT discussion -> OSCAL guidance
+                parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
                 // Assessment methods and objects
                 parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
+
                 control.setParts(parts);
 
                 // For 800-171 security requirement, create OSCAL control
@@ -139,6 +142,12 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
             }
             
             return control;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildPartFromElementText(elem, "guidance");
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
