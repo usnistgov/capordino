@@ -20,6 +20,7 @@ import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
 import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
 
 public class Cprt800171OscalConverter extends AbstractOscalConverter {
     protected void assertFrameworkIdentifier() throws InvalidFrameworkIdentifier {
@@ -137,11 +138,37 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
                 control.setParts(parts);
 
+                // Source Controls (no element type, external reference relationship type)
+
+                // Supporting Publications
+                control.setLinks(createSupportingPublicationsLinks(catalog, elem.getGlobalIdentifier()));
+
                 // For 800-171 security requirement, create OSCAL control
                 control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
             }
             
             return control;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    // Build RLinks to references, represented in CPRT site as Supporting Publications (reference element type, projection relationship type)
+    private List<Link> createSupportingPublicationsLinks(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, REFERENCE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            // Create external resource 
+            Resource supportingPublicationResource = new Resource();
+            supportingPublicationResource.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
+
+            // Publication information
+            Citation supportingPublicationCitation = new Citation();
+            supportingPublicationCitation.setText(MarkupLine.fromMarkdown(elem.title));
+            supportingPublicationResource.setCitation(supportingPublicationCitation);
+
+            // Link to publication
+            Rlink supportingPublicationRlink = new Rlink();
+            supportingPublicationRlink.setHref(URI.create(elem.text));
+            supportingPublicationResource.addRlink(supportingPublicationRlink);
+            
+            return newLinkRel(catalog, supportingPublicationResource, REFERENCE_ELEMENT_TYPE);
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
