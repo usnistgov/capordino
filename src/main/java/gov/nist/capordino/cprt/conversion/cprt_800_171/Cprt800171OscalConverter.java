@@ -89,6 +89,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
                 group.setId(elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
+                group.addProp(buildProp("sort-id", elem.element_identifier));
 
                 group.addPart(buildPartFromElementText(elem, "overview"));
                 // For 800-171 requirement, create an OSCAL group within this overall family group
@@ -112,6 +113,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
             
+            control.addProp(buildProp("sort-id", elem.element_identifier));
 
             // If title is blank, then this control is withdrawn
             if (elem.title.isEmpty()) {
@@ -138,10 +140,13 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
                 control.setParts(parts);
 
-                // Source Controls (no element type, external reference relationship type)
-
+                List<Link> links = new ArrayList<Link>();
+                // Source Controls
+                links.addAll(createSourceControlsLinks(catalog, elem.getGlobalIdentifier()));
                 // Supporting Publications
-                control.setLinks(createSupportingPublicationsLinks(catalog, elem.getGlobalIdentifier()));
+                links.addAll(createSupportingPublicationsLinks(catalog, elem.getGlobalIdentifier()));
+                
+                control.setLinks(links);
 
                 // For 800-171 security requirement, create OSCAL control
                 control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
@@ -151,23 +156,31 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
+    // Build RLinks to references to 800-53 controls, represented in CPRT site as Source Controls (no element type, external reference relationship type)
+    private List<Link> createSourceControlsLinks(Catalog catalog, String parentId) {
+        List<String> source_control_identifiers = getDestinationIdWithType(parentId, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<Link> source_controls_links = new ArrayList<Link>();
+
+        for (String source_control_identifier : source_control_identifiers) {
+            Resource source_control_resource = new Resource();
+            source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
+            Rlink rlink = new Rlink();
+            rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
+            source_control_resource.addRlink(rlink);
+
+            source_controls_links.add(newLinkRel(catalog, source_control_resource, REFERENCE_ELEMENT_TYPE));
+        }
+
+        return source_controls_links;
+    }
+
     // Build RLinks to references, represented in CPRT site as Supporting Publications (reference element type, projection relationship type)
     private List<Link> createSupportingPublicationsLinks(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, REFERENCE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            // Create external resource 
-            Resource supportingPublicationResource = new Resource();
-            supportingPublicationResource.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
-
-            // Publication information
-            Citation supportingPublicationCitation = new Citation();
-            supportingPublicationCitation.setText(MarkupLine.fromMarkdown(elem.title));
-            supportingPublicationResource.setCitation(supportingPublicationCitation);
-
-            // Link to publication
-            Rlink supportingPublicationRlink = new Rlink();
-            supportingPublicationRlink.setHref(URI.create(elem.text));
-            supportingPublicationResource.addRlink(supportingPublicationRlink);
-            
+            Resource supportingPublicationResource = buildResource(elem);
             return newLinkRel(catalog, supportingPublicationResource, REFERENCE_ELEMENT_TYPE);
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -212,7 +225,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
     private List<Link> createWithdrawnLinks(Catalog catalog, String parentId) {
         // Get the withdraw_reason element associated with the given element
         List<String> withdraw_identifiers = getRelatedElementsBySourceIdWithType(parentId, WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            return elem.element_identifier;
+            return elem.getGlobalIdentifier();
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         List<Link> links = new ArrayList<Link>();

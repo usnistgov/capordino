@@ -26,6 +26,7 @@ import gov.nist.secauto.oscal.lib.model.Metadata;
 import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.ResponsibleParty;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
 import gov.nist.secauto.oscal.lib.model.Metadata.Party;
 import gov.nist.secauto.oscal.lib.model.Metadata.Role;
@@ -279,7 +280,7 @@ public abstract class AbstractOscalConverter {
     // Useful to get the control a withdrawn control points to
     protected Stream<String> getDestinationIdWithType(String sourceId, String relationType) {
         return cprtRoot.getRelationships().stream()
-            .filter(rel -> rel.source_element_identifier.equals(sourceId) && rel.relationship_identifier.equals(relationType))
+            .filter(rel -> rel.getSourceGlobalIdentifier().equals(sourceId) && rel.relationship_identifier.equals(relationType))
             .map(rel -> {
                 return rel.dest_element_identifier;
             });
@@ -351,6 +352,24 @@ public abstract class AbstractOscalConverter {
         part.addPart(objects);
 
         return part;
+    }
+
+    protected Resource buildResource(CprtElement element) {
+        // Create external resource 
+        Resource resource = new Resource();
+        resource.setTitle(MarkupLine.fromMarkdown(element.element_identifier));
+
+        // Publication information
+        Citation citation = new Citation();
+        citation.setText(MarkupLine.fromMarkdown(element.title));
+        resource.setCitation(citation);
+
+        // Link to publication
+        Rlink rlink = new Rlink();
+        rlink.setHref(URI.create(element.text));
+        resource.addRlink(rlink);
+            
+        return resource;
     }
 
 }
