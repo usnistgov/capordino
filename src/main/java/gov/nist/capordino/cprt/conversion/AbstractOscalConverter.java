@@ -302,8 +302,13 @@ public abstract class AbstractOscalConverter {
     /**
      * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
      */
-    protected String escapeSquareBrackets(String input) {
+    protected String escapeSquareBracketsWithParentheses(String input) {
         return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
+    }
+
+    // Escape square brackets in input string, keep square brackets
+    protected String escapeSquareBrackets(String input) {
+        return input.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]");
     }
 
     protected Property buildProp(String name, String value) {
@@ -327,7 +332,7 @@ public abstract class AbstractOscalConverter {
         ControlPart elementProse = new ControlPart();
         elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
-        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
+        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
         return elementProse;
     }
 
@@ -343,7 +348,8 @@ public abstract class AbstractOscalConverter {
 
         // Regex to match how params are written in assessment objectives
         String objective_text = element.text;
-        Pattern odp_pattern = Pattern.compile("<(.+?): .*>");
+        // Need non-greedy regex, in case multiple params in one objective. Otherwise it matches multiple params as one.
+        Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
         Matcher odp_matcher = odp_pattern.matcher(objective_text);
 
         // Get param(s) in this assessment objective
@@ -351,15 +357,20 @@ public abstract class AbstractOscalConverter {
         while(odp_matcher.find()) {
             odp_identifiers.add(odp_matcher.group(1));
         }
-        // Build param Parts
+        
+        // Build param Parts, escapeSquareBracketsWithParentheses(param id)
 
         // Replace param with insert tag
         for (String odp_identifier : odp_identifiers) {
             String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
-            String objective_text_insert = objective_text.replaceAll(odp_pattern.pattern(), insert);
-            part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(objective_text_insert)));
+            String escaped_odp_identifier = escapeSquareBrackets(odp_identifier);
+
+            // Only replace the ODP that matches this identifier
+            String specific_odp_pattern = "<" + escaped_odp_identifier + ": .+?>"; 
+            objective_text = objective_text.replaceAll(specific_odp_pattern, insert);
         }
         
+        part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
 
         return part;
     }
@@ -386,7 +397,7 @@ public abstract class AbstractOscalConverter {
         // Convert the separator to two newlines, because fromMarkdown() converts two newlines to <p>
         String final_object_list = object_list.replaceAll(separator, "\n\n");
 
-        objects.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(final_object_list)));
+        objects.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(final_object_list)));
 
         // Nest assessment objects within assessment method
         part.addPart(objects);
