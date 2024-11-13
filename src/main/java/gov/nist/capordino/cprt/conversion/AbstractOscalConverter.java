@@ -3,7 +3,11 @@ package gov.nist.capordino.cprt.conversion;
 import java.io.IOException;
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
@@ -250,6 +254,15 @@ public abstract class AbstractOscalConverter {
 
     // Helpers
 
+    // Get all elements of type elemType and element identifier contains parentId
+    // Used for an easier way to retrieve the relevant assessment objectives of a control
+    protected Stream<CprtElement> getRelatedElementsByType(String elemType, String parentId) {
+        return cprtRoot.getElements().stream()
+            .filter(elem -> elem.element_type.equals(elemType))
+            .filter(elem -> elem.element_identifier.contains(parentId));
+            
+    }
+
     protected Stream<CprtElement> getRelatedElementsBySourceIdWithType(String sourceId, String elemType) {
         return cprtRoot.getRelationships().stream()
             .filter(rel -> rel.getSourceGlobalIdentifier().equals(sourceId))
@@ -324,6 +337,33 @@ public abstract class AbstractOscalConverter {
         return part;
     }
 
+    // Builds a Part for a Assessment Objective
+    protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
+        ControlPart part = buildPartFromElementText(element, "assessment-objective");
+
+        // Regex to match how params are written in assessment objectives
+        String objective_text = element.text;
+        Pattern odp_pattern = Pattern.compile("<(.+?): .*>");
+        Matcher odp_matcher = odp_pattern.matcher(objective_text);
+
+        // Get param(s) in this assessment objective
+        List<String> odp_identifiers = new ArrayList<String>();
+        while(odp_matcher.find()) {
+            odp_identifiers.add(odp_matcher.group(1));
+        }
+        // Build param Parts
+
+        // Replace param with insert tag
+        for (String odp_identifier : odp_identifiers) {
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
+            String objective_text_insert = objective_text.replaceAll(odp_pattern.pattern(), insert);
+            part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(objective_text_insert)));
+        }
+        
+
+        return part;
+    }
+
     // Builds a Part for Assessment Methods
     protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix) {
         ControlPart part = new ControlPart();
@@ -370,6 +410,27 @@ public abstract class AbstractOscalConverter {
         resource.addRlink(rlink);
             
         return resource;
+    }
+
+    // Create a relative Link
+    protected Link createLink(String identifier, String relationType) {
+        Link link = new Link();
+        link.setHref(URI.create(identifier));
+        link.setRel(relationType);
+
+        return link;
+    }
+
+    // Create a list of relative Links
+    protected List<Link> createLinks(List<String> identifiers, String relationType) {
+        List<Link> links = new ArrayList<Link>();
+
+        for (String identifier : identifiers) {
+            Link link = createLink(identifier, relationType);
+            links.add(link);
+        }
+
+        return links;
     }
 
 }

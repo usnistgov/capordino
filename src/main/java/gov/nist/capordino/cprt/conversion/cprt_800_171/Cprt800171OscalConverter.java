@@ -127,17 +127,21 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
                 }
             }
             else {
-                control.setTitle(MarkupLine.fromMarkdown(elem.title));       
-                
+                control.setTitle(MarkupLine.fromMarkdown(elem.title)); 
+
                 control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 List<ControlPart> parts = new ArrayList<ControlPart>();
                 parts.add(buildPartFromElementText(elem, "statement"));
                 // CPRT discussion -> OSCAL guidance
                 parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
+
+                // Assessment objectives
+                parts.addAll(createAssessmentObjectiveParts(catalog, elem.element_identifier));
+                
                 // Assessment methods and objects
                 parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
-
+                
                 control.setParts(parts);
 
                 List<Link> links = new ArrayList<Link>();
@@ -189,6 +193,16 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             return buildPartFromElementText(elem, "guidance");
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+
+    private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
+        List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            ControlPart part =  buildAssessmentObjectivePart(elem);
+            // part.addLink(createLink(parentId, "assessment-for"));
+            return part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return objective_parts;
     }
 
     // Assessment methods are EXAMINE, INTERVIEW, TEST
@@ -245,19 +259,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
         return links;
     }
 
-    // Create a list of relative Links
-    private List<Link> createLinks(List<String> identifiers, String relationType) {
-        List<Link> links = new ArrayList<Link>();
-
-        for (String identifier : identifiers) {
-            Link link = new Link();
-            link.setHref(URI.create(identifier));
-            link.setRel(relationType);
-            links.add(link);
-        }
-
-        return links;
-    }
+    
 
     /**
      * Build the third level control of the catalog, represented in CPRT as security requirements.
