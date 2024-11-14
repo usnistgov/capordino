@@ -16,6 +16,7 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
+import gov.nist.secauto.oscal.lib.model.Parameter;
 import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
 import gov.nist.secauto.oscal.lib.model.Link;
@@ -131,6 +132,9 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
 
                 control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
+                // ODPs, assignment parameters
+                control.setParams(createParams(catalog, elem.element_identifier)); // Note: element identifier instead of global identifier
+
                 List<ControlPart> parts = new ArrayList<ControlPart>();
                 parts.add(buildPartFromElementText(elem, "statement"));
                 // CPRT discussion -> OSCAL guidance
@@ -203,6 +207,17 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         return objective_parts;
+    }
+
+    private List<Parameter> createParams(Catalog catalog, String parentId) {
+        // Get all assessment objectives associated with this control
+        // Then get all ODPs in the assessment objective
+        List<Parameter> odp_params = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            List<Parameter> params = buildParams(elem);
+            return params;
+        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
+
+        return odp_params;
     }
 
     // Assessment methods are EXAMINE, INTERVIEW, TEST

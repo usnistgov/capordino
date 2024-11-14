@@ -27,6 +27,8 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
 import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.Metadata;
+import gov.nist.secauto.oscal.lib.model.Parameter;
+import gov.nist.secauto.oscal.lib.model.ParameterGuideline;
 import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.ResponsibleParty;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
@@ -346,21 +348,20 @@ public abstract class AbstractOscalConverter {
     protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
         ControlPart part = buildPartFromElementText(element, "assessment-objective");
 
-        // Regex to match how params are written in assessment objectives
+        // Regex to match how ODPs are written in assessment objectives
         String objective_text = element.text;
-        // Need non-greedy regex, in case multiple params in one objective. Otherwise it matches multiple params as one.
+        // Need non-greedy regex, otherwise it matches multiple ODPs as one.
         Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
         Matcher odp_matcher = odp_pattern.matcher(objective_text);
 
-        // Get param(s) in this assessment objective
+        // Get ODP(s) in this assessment objective
         List<String> odp_identifiers = new ArrayList<String>();
         while(odp_matcher.find()) {
             odp_identifiers.add(odp_matcher.group(1));
         }
         
-        // Build param Parts, escapeSquareBracketsWithParentheses(param id)
-
-        // Replace param with insert tag
+        
+        // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
             String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
             String escaped_odp_identifier = escapeSquareBrackets(odp_identifier);
@@ -373,6 +374,55 @@ public abstract class AbstractOscalConverter {
         part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
 
         return part;
+    }
+
+    // Builds a list of Params that the given assessment objective states
+    // Uses ODPs listed in assessment objective instead of in control, because ODP id is explicitly stated in assessment objective
+    // Also doesn't require traversing to all subcontrol items, to find all ODPs connected to a control
+    // Assumes assessment objective is correctly connected to the control it assesses
+    protected List<Parameter> buildParams(CprtElement element) {
+        // Regex to match how ODPs are written in assessment objectives
+        String objective_text = element.text;
+        // Need non-greedy regex. Otherwise it matches multiple ODPs as one.
+        Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
+        Matcher odp_matcher = odp_pattern.matcher(objective_text);
+
+        // Get ODP(s) in this assessment objective
+        List<String> odp_identifiers = new ArrayList<String>();
+        while(odp_matcher.find()) {
+            odp_identifiers.add(odp_matcher.group(1));
+        }
+        
+        // Build param Parts
+        List<Parameter> params = new ArrayList<Parameter>();
+        for (String odp_identifier : odp_identifiers) {
+            params.add(buildParam(odp_identifier, element.doc_identifier));
+        }
+
+        return params;
+    }
+
+    // Builds a OSCAL Param for a given ODP id
+    protected Parameter buildParam(String odp_identifier, String doc_identifier) {
+        // Convert to global identifier, because of how elements map stores elements
+        String odp_global_identifier = doc_identifier + ":" + odp_identifier;
+
+        // Get the ODP element associated with the ODP id
+        CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+
+        // Create a Parameter object
+        Parameter odp_param = new Parameter();
+        odp_param.addProp(buildLabelProp(odp_identifier));
+        odp_param.setLabel(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.title)));
+        ParameterGuideline odp_param_guideline = new ParameterGuideline();
+        odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
+        odp_param.addGuideline(odp_param_guideline);
+
+        // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
+        String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
+        odp_param.setId(escaped_odp_identifier);
+
+        return odp_param;
     }
 
     // Builds a Part for Assessment Methods
