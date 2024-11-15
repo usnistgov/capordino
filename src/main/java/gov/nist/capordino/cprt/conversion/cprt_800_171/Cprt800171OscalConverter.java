@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -218,6 +220,35 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
 
         return odp_params;
+    }
+
+    @Override
+    protected String parseODPInElementText(CprtElement element) {
+        // Need non-greedy regex, otherwise it matches multiple ODPs as one.
+        String text = element.text;
+        String odp_pattern = "(\\[Assignment: .+?\\])";
+
+        // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
+        List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        // For the assessment objective related to this control, get the related ODP
+        for (CprtElement related_assessment_objective : related_assessment_objectives) {
+            List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            // Replace ODP with insert param
+            for (String odp_identifier : related_odps) {
+                String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
+
+                // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs 
+                text = text.replaceFirst(odp_pattern, insert);
+            }
+        }
+        
+        return text;
     }
 
     // Assessment methods are EXAMINE, INTERVIEW, TEST

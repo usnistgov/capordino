@@ -6,36 +6,37 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-import javax.annotation.Nullable;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.pojo.CprtElement;
 import gov.nist.capordino.cprt.pojo.CprtExportResponse;
 import gov.nist.capordino.cprt.pojo.CprtMetadataResponse;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
+import gov.nist.capordino.cprt.pojo.CprtRelationship;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
 import gov.nist.secauto.oscal.lib.model.Address;
 import gov.nist.secauto.oscal.lib.model.BackMatter;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
 import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.Metadata;
+import gov.nist.secauto.oscal.lib.model.Metadata.Party;
+import gov.nist.secauto.oscal.lib.model.Metadata.Role;
 import gov.nist.secauto.oscal.lib.model.Parameter;
 import gov.nist.secauto.oscal.lib.model.ParameterGuideline;
 import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.ResponsibleParty;
-import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
-import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
-import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
-import gov.nist.secauto.oscal.lib.model.Metadata.Party;
-import gov.nist.secauto.oscal.lib.model.Metadata.Role;
 
 public abstract class AbstractOscalConverter {
     protected final CprtMetadataVersion cprtMetadataVersion;
@@ -334,9 +335,14 @@ public abstract class AbstractOscalConverter {
         ControlPart elementProse = new ControlPart();
         elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
-        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
+
+        // Parse ODPs before setting text
+        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(parseODPInElementText(element))));
+        
         return elementProse;
     }
+
+    protected abstract String parseODPInElementText(CprtElement element);
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
         ControlPart part = buildPartFromElementText(element, name);
