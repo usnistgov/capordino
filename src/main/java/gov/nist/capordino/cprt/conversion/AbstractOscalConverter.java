@@ -379,6 +379,12 @@ public abstract class AbstractOscalConverter {
         
         part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
 
+        // Add assessment-for link to the subcontrol item this objective assesses
+        List<CprtRelationship> assessment_for_relationships = cprtRoot.getRelationshipsByDestinationElementId(element.getGlobalIdentifier());
+        for (CprtRelationship assessment_for_relationship : assessment_for_relationships) {
+            part.addLink(createLink("#" + assessment_for_relationship.source_element_identifier, "assessment-for"));
+        }
+
         return part;
     }
 
