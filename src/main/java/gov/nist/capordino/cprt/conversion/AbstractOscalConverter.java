@@ -5,6 +5,8 @@ import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -388,15 +390,12 @@ public abstract class AbstractOscalConverter {
         return part;
     }
 
-    // Builds a list of Params that the given assessment objective states
-    // Uses ODPs listed in assessment objective instead of in control, because ODP id is explicitly stated in assessment objective
-    // Also doesn't require traversing to all subcontrol items, to find all ODPs connected to a control
-    // Assumes assessment objective is correctly connected to the control it assesses
-    protected List<Parameter> buildParams(CprtElement element) {
+    // Return list of ODP identifiers found within element text
+    protected List<String> get_odp_identifiers(CprtElement element, String pattern) {
         // Regex to match how ODPs are written in assessment objectives
         String objective_text = element.text;
         // Need non-greedy regex. Otherwise it matches multiple ODPs as one.
-        Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
+        Pattern odp_pattern = Pattern.compile(pattern);
         Matcher odp_matcher = odp_pattern.matcher(objective_text);
 
         // Get ODP(s) in this assessment objective
@@ -404,11 +403,19 @@ public abstract class AbstractOscalConverter {
         while(odp_matcher.find()) {
             odp_identifiers.add(odp_matcher.group(1));
         }
-        
+
+        return odp_identifiers;
+    }
+
+    // Builds a list of Params that the given assessment objective states
+    // Uses ODPs listed in assessment objective instead of in control, because ODP id is explicitly stated in assessment objective
+    // Also doesn't require traversing to all subcontrol items, to find all ODPs connected to a control
+    // Assumes assessment objective is correctly connected to the control it assesses
+    protected List<Parameter> buildParams(String doc_identifier, Set<String> odp_identifiers) {
         // Build param Parts
         List<Parameter> params = new ArrayList<Parameter>();
         for (String odp_identifier : odp_identifiers) {
-            params.add(buildParam(odp_identifier, element.doc_identifier));
+            params.add(buildParam(odp_identifier, doc_identifier));
         }
 
         return params;

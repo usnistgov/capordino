@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -135,7 +137,7 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
                 control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 // ODPs, assignment parameters
-                control.setParams(createParams(catalog, elem.element_identifier)); // Note: element identifier instead of global identifier
+                control.setParams(createParams(elem));
 
                 List<ControlPart> parts = new ArrayList<ControlPart>();
                 parts.add(buildPartFromElementText(elem, "statement"));
@@ -205,20 +207,25 @@ public class Cprt800171OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
         List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
             ControlPart part =  buildAssessmentObjectivePart(elem);
-            // part.addLink(createLink(parentId, "assessment-for"));
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         return objective_parts;
     }
 
-    private List<Parameter> createParams(Catalog catalog, String parentId) {
+    private List<Parameter> createParams(CprtElement parent) {
         // Get all assessment objectives associated with this control
         // Then get all ODPs in the assessment objective
-        List<Parameter> odp_params = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
-            List<Parameter> params = buildParams(elem);
-            return params;
+        String parentId = parent.element_identifier;
+        List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            return get_odp_identifiers(elem, "<(.+?): .+?>");
         }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
 
+        // LinkedHashSet to keep order and account for same ODPs in different objectives
+        Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
+
+        List<Parameter> odp_params = buildParams(parent.doc_identifier, odp_identifiers_set);
+
+        
         return odp_params;
     }
 
