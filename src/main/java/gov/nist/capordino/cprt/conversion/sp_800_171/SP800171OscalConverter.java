@@ -1,4 +1,4 @@
-package gov.nist.capordino.cprt.conversion.cprt_800_171;
+package gov.nist.capordino.cprt.conversion.sp_800_171;
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,24 +27,24 @@ import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
 
-public class Cprt800171OscalConverter extends AbstractOscalConverter {
+public class SP800171OscalConverter extends AbstractOscalConverter {
     protected void assertFrameworkIdentifier() throws InvalidFrameworkIdentifier {
         if (!cprtMetadataVersion.frameworkIdentifier.equals("SP_800_171_3_0_0")) {
             throw new InvalidFrameworkIdentifier("SP_800_171_3_0_0", cprtMetadataVersion.frameworkIdentifier);
         }
     }
 
-    public Cprt800171OscalConverter(CprtMetadataVersion cprtMetadataVersion, CprtRoot cprtRoot) throws InvalidFrameworkIdentifier {
+    public SP800171OscalConverter(CprtMetadataVersion cprtMetadataVersion, CprtRoot cprtRoot) throws InvalidFrameworkIdentifier {
         super(cprtMetadataVersion, cprtRoot);
         assertFrameworkIdentifier();
     }
     
-    public Cprt800171OscalConverter(CprtMetadataVersion cprtMetadataVersion) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+    public SP800171OscalConverter(CprtMetadataVersion cprtMetadataVersion) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         super(cprtMetadataVersion);
         assertFrameworkIdentifier();
     }
 
-    public Cprt800171OscalConverter(String frameworkVersionIdentifier) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+    public SP800171OscalConverter(String frameworkVersionIdentifier) throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         super(frameworkVersionIdentifier);
         assertFrameworkIdentifier();
     }

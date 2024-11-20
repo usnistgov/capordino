@@ -1,4 +1,4 @@
-package gov.nist.capordino.cprt.conversion.cprt_800_171;
+package gov.nist.capordino.cprt.conversion.sp_800_171;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
-import gov.nist.capordino.cprt.conversion.cprt_800_171.Cprt800171OscalConverter;
 import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
+import gov.nist.capordino.cprt.conversion.sp_800_171.SP800171OscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -34,7 +34,7 @@ import gov.nist.secauto.oscal.lib.OscalBindingContext;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class Cprt800171OscalConverterTest {
+public class SP800171OscalConverterTest {
     /**
      * A CPRT file that contains a subset of 800-171 content.
      */
@@ -76,7 +76,7 @@ public class Cprt800171OscalConverterTest {
     @Test
     @Order(1)
     void testConvertSampleToOscal() throws StreamReadException, DatabindException, IOException, InvalidFrameworkIdentifier {        
-        Cprt800171OscalConverter converter = new Cprt800171OscalConverter(version, root);
+        SP800171OscalConverter converter = new SP800171OscalConverter(version, root);
         Catalog catalog = converter.buildCatalog();
 
         // Write to a file and load again to ensure the serialization and deserialization works
