@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.HashSet;
 import java.util.Set;
@@ -37,6 +38,7 @@ import gov.nist.secauto.oscal.lib.model.Metadata.Party;
 import gov.nist.secauto.oscal.lib.model.Metadata.Role;
 import gov.nist.secauto.oscal.lib.model.Parameter;
 import gov.nist.secauto.oscal.lib.model.ParameterGuideline;
+import gov.nist.secauto.oscal.lib.model.ParameterSelection;
 import gov.nist.secauto.oscal.lib.model.Property;
 import gov.nist.secauto.oscal.lib.model.ResponsibleParty;
 
@@ -344,7 +346,9 @@ public abstract class AbstractOscalConverter {
         return elementProse;
     }
 
-    protected abstract String parseODPInElementText(CprtElement element);
+    protected String parseODPInElementText(CprtElement element) {
+        return "";
+    }
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
         ControlPart part = buildPartFromElementText(element, name);
@@ -421,6 +425,22 @@ public abstract class AbstractOscalConverter {
         return params;
     }
 
+    // Parse choices in a multi_select type ODP
+    protected List<String> parseParamChoices(String text) {
+        Pattern choices_pattern = Pattern.compile("selected: \\{(.+?)\\}");
+        Matcher choices_matcher = choices_pattern.matcher(text);
+
+        if (choices_matcher.find()) {
+           String choices_string = choices_matcher.group(1);
+           String[] choices_list = choices_string.split(";");
+           return Arrays.asList(choices_list);
+        }
+        else {
+            // Error: didn't parse correctly
+            return Arrays.asList(text);
+        }
+    }
+
     // Builds a OSCAL Param for a given ODP id
     protected Parameter buildParam(String odp_identifier, String doc_identifier) {
         // Convert to global identifier, because of how elements map stores elements
@@ -433,10 +453,28 @@ public abstract class AbstractOscalConverter {
         Parameter odp_param = new Parameter();
         odp_param.addProp(buildLabelProp(odp_identifier));
         odp_param.setLabel(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.title)));
-        ParameterGuideline odp_param_guideline = new ParameterGuideline();
-        odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
-        odp_param.addGuideline(odp_param_guideline);
 
+        // List<String> odp_type = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE);
+        
+        if (odp_element.title.equals("SELECTED PARAMETER VALUES")) {
+            // multi_select type param
+            ParameterSelection odp_param_selection = new ParameterSelection();
+            odp_param_selection.setHowMany("one-or-more");
+
+            List<String> odp_param_choices = parseParamChoices(odp_element.text);
+
+            for (String choice : odp_param_choices) {
+                odp_param_selection.addChoice(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(choice)));
+            }
+            odp_param.setSelect(odp_param_selection);
+        }
+        else {
+            // Assignment type param
+            ParameterGuideline odp_param_guideline = new ParameterGuideline();
+            odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
+            odp_param.addGuideline(odp_param_guideline);
+        }
+        
         // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
         String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
         odp_param.setId(escaped_odp_identifier);
