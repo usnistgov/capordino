@@ -220,10 +220,23 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
             return get_odp_identifiers(elem, "<(.+?): .+?>");
         }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
 
+        // ODPs within ODPs
+        List<String> additional_odps = new ArrayList<String>();
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = parent.doc_identifier + ":" + odp_identifier;
+            
+            List<String> odps_within_odp = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            additional_odps.addAll(odps_within_odp);
+        }
+        odp_identifiers.addAll(additional_odps);
+
         // LinkedHashSet to keep order and account for same ODPs in different objectives
         Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
 
-        List<Parameter> odp_params = buildParams(parent.doc_identifier, odp_identifiers_set);
+        List<Parameter> odp_params = buildParams(parent.doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE);
 
         
         return odp_params;

@@ -415,11 +415,11 @@ public abstract class AbstractOscalConverter {
     // Uses ODPs listed in assessment objective instead of in control, because ODP id is explicitly stated in assessment objective
     // Also doesn't require traversing to all subcontrol items, to find all ODPs connected to a control
     // Assumes assessment objective is correctly connected to the control it assesses
-    protected List<Parameter> buildParams(String doc_identifier, Set<String> odp_identifiers) {
+    protected List<Parameter> buildParams(String doc_identifier, Set<String> odp_identifiers, String odp_type_element_type) {
         // Build param Parts
         List<Parameter> params = new ArrayList<Parameter>();
         for (String odp_identifier : odp_identifiers) {
-            params.add(buildParam(odp_identifier, doc_identifier));
+            params.add(buildParam(odp_identifier, doc_identifier, odp_type_element_type));
         }
 
         return params;
@@ -442,7 +442,7 @@ public abstract class AbstractOscalConverter {
     }
 
     // Builds a OSCAL Param for a given ODP id
-    protected Parameter buildParam(String odp_identifier, String doc_identifier) {
+    protected Parameter buildParam(String odp_identifier, String doc_identifier, String odp_type_element_type) {
         // Convert to global identifier, because of how elements map stores elements
         String odp_global_identifier = doc_identifier + ":" + odp_identifier;
 
@@ -454,12 +454,32 @@ public abstract class AbstractOscalConverter {
         odp_param.addProp(buildLabelProp(odp_identifier));
         odp_param.setLabel(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.title)));
 
-        // List<String> odp_type = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE);
+        // Build param based on type
+        List<String> odp_types = getRelatedElementsBySourceIdWithType(odp_global_identifier, odp_type_element_type).map(elem -> {
+            return elem.element_identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        String odp_type = odp_types.get(0);
+        if (odp_type == null) {
+            throw new IllegalArgumentException("ODP " + odp_global_identifier + "has no ODP type");
+        }
         
-        if (odp_element.title.equals("SELECTED PARAMETER VALUES")) {
-            // multi_select type param
+        if (odp_type.equals("single_entry")) {
+            // Assignment type param
+            ParameterGuideline odp_param_guideline = new ParameterGuideline();
+            odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
+            odp_param.addGuideline(odp_param_guideline);
+        }
+        else {
+            // Selection type param
             ParameterSelection odp_param_selection = new ParameterSelection();
-            odp_param_selection.setHowMany("one-or-more");
+            if (odp_type.equals("multi_select")) {
+                odp_param_selection.setHowMany("one-or-more");
+            }
+            else if (odp_type.equals("single_select")) {
+                odp_param_selection.setHowMany("one");
+            }
+            
 
             List<String> odp_param_choices = parseParamChoices(odp_element.text);
 
@@ -467,12 +487,6 @@ public abstract class AbstractOscalConverter {
                 odp_param_selection.addChoice(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(choice)));
             }
             odp_param.setSelect(odp_param_selection);
-        }
-        else {
-            // Assignment type param
-            ParameterGuideline odp_param_guideline = new ParameterGuideline();
-            odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
-            odp_param.addGuideline(odp_param_guideline);
         }
         
         // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
