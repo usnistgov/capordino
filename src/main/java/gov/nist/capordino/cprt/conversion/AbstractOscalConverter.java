@@ -360,16 +360,7 @@ public abstract class AbstractOscalConverter {
     // Use when ODP id is explicitly stated: asssessment objective, ODP
     // Can't use when ODP id is implicit: control items
     protected String insertParamInText(String text) {
-        // Regex to match how ODPs are stated
-        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
-        Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
-        Matcher odp_matcher = odp_pattern.matcher(text);
-
-        // Get ODP(s) in this text
-        List<String> odp_identifiers = new ArrayList<String>();
-        while(odp_matcher.find()) {
-            odp_identifiers.add(odp_matcher.group(1));
-        }
+        List<String> odp_identifiers = get_odp_identifiers(text, "<(.+?): .+?>");
         
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
@@ -403,12 +394,11 @@ public abstract class AbstractOscalConverter {
     }
 
     // Return list of ODP identifiers found within element text
-    protected List<String> get_odp_identifiers(CprtElement element, String pattern) {
-        // Regex to match how ODPs are written in assessment objectives
-        String objective_text = element.text;
-        // Need non-greedy regex. Otherwise it matches multiple ODPs as one.
+    protected List<String> get_odp_identifiers(String text, String pattern) {
+        // Regex to match how ODPs are stated
+        // Need non-greedy regex for minimum possible match. Otherwise it matches multiple ODPs as one.
         Pattern odp_pattern = Pattern.compile(pattern);
-        Matcher odp_matcher = odp_pattern.matcher(objective_text);
+        Matcher odp_matcher = odp_pattern.matcher(text);
 
         // Get ODP(s) in this assessment objective
         List<String> odp_identifiers = new ArrayList<String>();

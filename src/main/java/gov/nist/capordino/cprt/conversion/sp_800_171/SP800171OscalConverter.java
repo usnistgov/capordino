@@ -217,7 +217,7 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
         // Then get all ODPs in the assessment objective
         String parentId = parent.element_identifier;
         List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
-            return get_odp_identifiers(elem, "<(.+?): .+?>");
+            return get_odp_identifiers(elem.text, "<(.+?): .+?>");
         }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
 
         // ODPs within ODPs
