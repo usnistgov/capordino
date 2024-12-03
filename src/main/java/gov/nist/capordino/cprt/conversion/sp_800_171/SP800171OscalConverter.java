@@ -267,8 +267,15 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
 
                 // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
                 // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
-                text = text.replaceFirst(odp_multi_select_pattern, insert);
-                text = text.replaceFirst(odp_assign_pattern, insert);
+                Pattern multi_select_pattern = Pattern.compile(odp_multi_select_pattern);
+                Matcher multi_select_matcher = multi_select_pattern.matcher(text);
+                // Replace either a select or assignment pattern
+                if (multi_select_matcher.find()) {
+                    text = text.replaceFirst(odp_multi_select_pattern, insert);
+                }
+                else {
+                    text = text.replaceFirst(odp_assign_pattern, insert);
+                }
             }
         }
         
