@@ -356,22 +356,20 @@ public abstract class AbstractOscalConverter {
         return part;
     }
 
-    // Builds a Part for a Assessment Objective
-    protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
-        ControlPart part = buildPartFromElementText(element, "assessment-objective");
-
-        // Regex to match how ODPs are written in assessment objectives
-        String objective_text = element.text;
-        // Need non-greedy regex, otherwise it matches multiple ODPs as one.
+    // Replace <ODP_id> with <insert> in text
+    // Use when ODP id is explicitly stated: asssessment objective, ODP
+    // Can't use when ODP id is implicit: control items
+    protected String insertParamInText(String text) {
+        // Regex to match how ODPs are stated
+        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
         Pattern odp_pattern = Pattern.compile("<(.+?): .+?>");
-        Matcher odp_matcher = odp_pattern.matcher(objective_text);
+        Matcher odp_matcher = odp_pattern.matcher(text);
 
-        // Get ODP(s) in this assessment objective
+        // Get ODP(s) in this text
         List<String> odp_identifiers = new ArrayList<String>();
         while(odp_matcher.find()) {
             odp_identifiers.add(odp_matcher.group(1));
         }
-        
         
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
@@ -380,8 +378,18 @@ public abstract class AbstractOscalConverter {
 
             // Only replace the ODP that matches this identifier
             String specific_odp_pattern = "<" + escaped_odp_identifier + ": .+?>"; 
-            objective_text = objective_text.replaceAll(specific_odp_pattern, insert);
+            text = text.replaceAll(specific_odp_pattern, insert);
         }
+
+        return text;
+    }
+
+    // Builds a Part for a Assessment Objective
+    protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
+        ControlPart part = buildPartFromElementText(element, "assessment-objective");
+
+        // Parse any ODPs contained in this assessment objective
+        String objective_text = insertParamInText(element.text);
         
         part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
 
@@ -432,7 +440,9 @@ public abstract class AbstractOscalConverter {
 
         if (choices_matcher.find()) {
            String choices_string = choices_matcher.group(1);
+           choices_string = insertParamInText(choices_string);
            String[] choices_list = choices_string.split(";");
+
            return Arrays.asList(choices_list);
         }
         else {

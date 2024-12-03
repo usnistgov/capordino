@@ -244,9 +244,11 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
 
     @Override
     protected String parseODPInElementText(CprtElement element) {
-        // Need non-greedy regex, otherwise it matches multiple ODPs as one.
         String text = element.text;
-        String odp_pattern = "(\\[Assignment: .+?\\])";
+        // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
+        String odp_multi_select_pattern = "(\\[Selection \\(one or more\\): .+\\])";
+        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
+        String odp_assign_pattern = "(\\[Assignment: .+?\\])";
 
         // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
         List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
@@ -263,8 +265,10 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
             for (String odp_identifier : related_odps) {
                 String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
 
-                // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs 
-                text = text.replaceFirst(odp_pattern, insert);
+                // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
+                // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
+                text = text.replaceFirst(odp_multi_select_pattern, insert);
+                text = text.replaceFirst(odp_assign_pattern, insert);
             }
         }
         
