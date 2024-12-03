@@ -469,6 +469,11 @@ public abstract class AbstractOscalConverter {
             ParameterGuideline odp_param_guideline = new ParameterGuideline();
             odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
             odp_param.addGuideline(odp_param_guideline);
+
+            CprtElement odp_statement_element = cprtRoot.getElementById(doc_identifier + ":" + "OS-" + odp_identifier.toLowerCase());
+            if (odp_statement_element != null) {
+                odp_param.setUsage(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_statement_element.text)));
+            }
         }
         else {
             // Selection type param
