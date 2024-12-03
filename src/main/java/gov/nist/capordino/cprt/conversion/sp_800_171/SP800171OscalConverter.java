@@ -245,38 +245,20 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     @Override
     protected String parseODPInElementText(CprtElement element) {
         String text = element.text;
-        // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
-        String odp_multi_select_pattern = "(\\[Selection \\(one or more\\): .+\\])";
-        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
-        String odp_assign_pattern = "(\\[Assignment: .+?\\])";
 
         // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
         List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             return elem;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-        // For the assessment objective related to this control, get the related ODP
+        // For the assessment objective related to this control, get the related ODP(s)
         for (CprtElement related_assessment_objective : related_assessment_objectives) {
             List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 return elem.element_identifier;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-            // Replace ODP with insert param
-            for (String odp_identifier : related_odps) {
-                String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
-
-                // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
-                // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
-                Pattern multi_select_pattern = Pattern.compile(odp_multi_select_pattern);
-                Matcher multi_select_matcher = multi_select_pattern.matcher(text);
-                // Replace either a select or assignment pattern
-                if (multi_select_matcher.find()) {
-                    text = text.replaceFirst(odp_multi_select_pattern, insert);
-                }
-                else {
-                    text = text.replaceFirst(odp_assign_pattern, insert);
-                }
-            }
+            // Replaced implicitly stated ODP with <insert odp_id>
+            text = insertImplicitParams(text, related_odps);
         }
         
         return text;

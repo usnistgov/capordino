@@ -357,9 +357,8 @@ public abstract class AbstractOscalConverter {
     }
 
     // Replace <ODP_id> with <insert> in text
-    // Use when ODP id is explicitly stated: asssessment objective, ODP
-    // Can't use when ODP id is implicit: control items
-    protected String insertParamInText(String text) {
+    // Use when ODP id is explicitly stated: asssessment objective
+    protected String insertExplicitParams(String text) {
         List<String> odp_identifiers = get_odp_identifiers(text, "<(.+?): .+?>");
         
         // Replace ODP with insert param
@@ -375,12 +374,42 @@ public abstract class AbstractOscalConverter {
         return text;
     }
 
+    // Replace [Selection: ...] or [Assignment: ...] with <insert> in text
+    // Use when ODP id is implicit: control items, ODP contained inside another ODP
+    protected String insertImplicitParams(String text, List<String> related_odps) {
+         // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
+         String odp_multi_select_pattern = "(\\[Selection \\(one or more\\): .+\\])";
+         // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
+         String odp_assign_pattern = "(\\[Assignment: .+?\\])";
+
+        // Replace ODP with insert param
+        // NOTE: assumes ODPs are non-repeating and in order in the text
+        for (String odp_identifier : related_odps) {
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
+
+            // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
+            // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
+            Pattern multi_select_pattern = Pattern.compile(odp_multi_select_pattern);
+            Matcher multi_select_matcher = multi_select_pattern.matcher(text);
+            // Replace either a select or assignment pattern
+            if (multi_select_matcher.find()) {
+                text = text.replaceFirst(odp_multi_select_pattern, insert);
+            }
+            else {
+                text = text.replaceFirst(odp_assign_pattern, insert);
+            }
+        }
+
+        return text;
+    }
+    
+
     // Builds a Part for a Assessment Objective
     protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
         ControlPart part = buildPartFromElementText(element, "assessment-objective");
 
         // Parse any ODPs contained in this assessment objective
-        String objective_text = insertParamInText(element.text);
+        String objective_text = insertExplicitParams(element.text);
         
         part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
 
@@ -393,7 +422,7 @@ public abstract class AbstractOscalConverter {
         return part;
     }
 
-    // Return list of ODP identifiers found within element text
+    // Return list of ODP identifiers stated explicitly within element text
     protected List<String> get_odp_identifiers(String text, String pattern) {
         // Regex to match how ODPs are stated
         // Need non-greedy regex for minimum possible match. Otherwise it matches multiple ODPs as one.
@@ -424,21 +453,13 @@ public abstract class AbstractOscalConverter {
     }
 
     // Parse choices in a multi_select type ODP
-    protected List<String> parseParamChoices(String text) {
-        Pattern choices_pattern = Pattern.compile("selected: \\{(.+?)\\}");
-        Matcher choices_matcher = choices_pattern.matcher(text);
+    protected List<String> parseParamChoices(String odp_statement_text, String odp_text) {
+        // For multi_select ODPs, choices are in odp_statement_text but nested ODP ids are in odp_text
+        List<String> nested_odps = get_odp_identifiers(odp_text, "<(.+?): .+?>");
+        String choices = insertImplicitParams(odp_statement_text, nested_odps);
+        String[] choices_list = choices.split(";");
 
-        if (choices_matcher.find()) {
-           String choices_string = choices_matcher.group(1);
-           choices_string = insertParamInText(choices_string);
-           String[] choices_list = choices_string.split(";");
-
-           return Arrays.asList(choices_list);
-        }
-        else {
-            // Error: didn't parse correctly
-            return Arrays.asList(text);
-        }
+        return Arrays.asList(choices_list);
     }
 
     // Builds a OSCAL Param for a given ODP id
@@ -448,6 +469,8 @@ public abstract class AbstractOscalConverter {
 
         // Get the ODP element associated with the ODP id
         CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+        // Get the ODP statement element associated with this ODP
+        CprtElement odp_statement_element = cprtRoot.getElementById(doc_identifier + ":" + "OS-" + odp_identifier.toLowerCase());
 
         // Create a Parameter object
         Parameter odp_param = new Parameter();
@@ -470,7 +493,6 @@ public abstract class AbstractOscalConverter {
             odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
             odp_param.addGuideline(odp_param_guideline);
 
-            CprtElement odp_statement_element = cprtRoot.getElementById(doc_identifier + ":" + "OS-" + odp_identifier.toLowerCase());
             if (odp_statement_element != null) {
                 odp_param.setUsage(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_statement_element.text)));
             }
@@ -486,7 +508,7 @@ public abstract class AbstractOscalConverter {
             }
             
 
-            List<String> odp_param_choices = parseParamChoices(odp_element.text);
+            List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text);
 
             for (String choice : odp_param_choices) {
                 odp_param_selection.addChoice(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(choice)));
