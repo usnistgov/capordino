@@ -254,6 +254,15 @@ public abstract class AbstractOscalConverter {
         return metadata;
     }
 
+    // Helper methods to create prose
+    protected MarkupLine createMarkupLineEscaped(String text) {
+        return MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(text));
+    }
+
+    protected MarkupMultiline createMarkupMultilineEscaped(String text) {
+        return MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(text));
+    }
+
     /*
      * Given a catalog containing minimal metadata, hydrate the catalog with the CPRT data
      */
@@ -341,7 +350,7 @@ public abstract class AbstractOscalConverter {
         elementProse.setName(name);
 
         // Parse ODPs before setting text
-        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(parseODPInElementText(element))));
+        elementProse.setProse(createMarkupMultilineEscaped(parseODPInElementText(element)));
         
         return elementProse;
     }
@@ -411,7 +420,7 @@ public abstract class AbstractOscalConverter {
         // Parse any ODPs contained in this assessment objective
         String objective_text = insertExplicitParams(element.text);
         
-        part.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(objective_text)));
+        part.setProse(createMarkupMultilineEscaped(objective_text));
 
         // Add assessment-for link to the subcontrol item this objective assesses
         List<CprtRelationship> assessment_for_relationships = cprtRoot.getRelationshipsByDestinationElementId(element.getGlobalIdentifier());
@@ -475,7 +484,7 @@ public abstract class AbstractOscalConverter {
         // Create a Parameter object
         Parameter odp_param = new Parameter();
         odp_param.addProp(buildLabelProp(odp_identifier));
-        odp_param.setLabel(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.title)));
+        odp_param.setLabel(createMarkupLineEscaped(odp_element.title));
 
         // Build param based on type
         List<String> odp_types = getRelatedElementsBySourceIdWithType(odp_global_identifier, odp_type_element_type).map(elem -> {
@@ -490,11 +499,11 @@ public abstract class AbstractOscalConverter {
         if (odp_type.equals("single_entry")) {
             // Assignment type param
             ParameterGuideline odp_param_guideline = new ParameterGuideline();
-            odp_param_guideline.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_element.text)));
+            odp_param_guideline.setProse(createMarkupMultilineEscaped(odp_element.text));
             odp_param.addGuideline(odp_param_guideline);
 
             if (odp_statement_element != null) {
-                odp_param.setUsage(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(odp_statement_element.text)));
+                odp_param.setUsage(createMarkupMultilineEscaped(odp_statement_element.text));
             }
         }
         else {
@@ -511,7 +520,7 @@ public abstract class AbstractOscalConverter {
             List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text);
 
             for (String choice : odp_param_choices) {
-                odp_param_selection.addChoice(MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(choice)));
+                odp_param_selection.addChoice(createMarkupLineEscaped(choice));
             }
             odp_param.setSelect(odp_param_selection);
         }
@@ -545,7 +554,7 @@ public abstract class AbstractOscalConverter {
         // Convert the separator to two newlines, because fromMarkdown() converts two newlines to <p>
         String final_object_list = object_list.replaceAll(separator, "\n\n");
 
-        objects.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(final_object_list)));
+        objects.setProse(createMarkupMultilineEscaped(final_object_list));
 
         // Nest assessment objects within assessment method
         part.addPart(objects);
