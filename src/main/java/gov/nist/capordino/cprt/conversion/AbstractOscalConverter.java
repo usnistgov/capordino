@@ -256,11 +256,11 @@ public abstract class AbstractOscalConverter {
 
     // Helper methods to create prose
     protected MarkupLine createMarkupLineEscaped(String text) {
-        return MarkupLine.fromMarkdown(escapeSquareBracketsWithParentheses(text));
+        return MarkupLine.fromMarkdown(escapeSquareBracketsWithPeriods(text));
     }
 
     protected MarkupMultiline createMarkupMultilineEscaped(String text) {
-        return MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(text));
+        return MarkupMultiline.fromMarkdown(escapeSquareBracketsWithPeriods(text));
     }
 
     /*
@@ -318,6 +318,10 @@ public abstract class AbstractOscalConverter {
     /**
      * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
      */
+    protected String escapeSquareBracketsWithPeriods(String input) {
+        return input.replaceAll("\\[", ".").replaceAll("\\]", "");
+    }
+
     protected String escapeSquareBracketsWithParentheses(String input) {
         return input.replaceAll("\\[", "(").replaceAll("\\]", ")");
     }
@@ -526,7 +530,8 @@ public abstract class AbstractOscalConverter {
         }
         
         // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
-        String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
+        // String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
+        String escaped_odp_identifier = escapeSquareBracketsWithPeriods(odp_identifier);
         odp_param.setId(escaped_odp_identifier);
 
         return odp_param;

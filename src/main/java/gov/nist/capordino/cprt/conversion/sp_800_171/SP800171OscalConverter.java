@@ -91,7 +91,7 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
             .map(elem -> {
                 // For each 800-171 family, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
-                group.setId(elem.element_identifier);
+                group.setId("SP_800_171_" + elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
                 group.addProp(buildProp("sort-id", elem.element_identifier));
@@ -115,7 +115,7 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     private List<Control> buildRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId(elem.element_identifier);
+            control.setId("SP_800_171_" + elem.element_identifier);
             control.setClazz(elem.element_type);
             
             control.addProp(buildProp("sort-id", elem.element_identifier));
@@ -123,6 +123,7 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
             // If title is blank, then this control is withdrawn
             if (elem.title.isEmpty()) {
                 control.addProp(buildWithdrawnProp());
+                control.setTitle(createMarkupLineEscaped(elem.element_identifier));
 
                 // Create links to the control(s) this withdrawn control points to
                 List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
@@ -326,8 +327,9 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     private List<Control> buildSecurityRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId(elem.element_identifier);
+            control.setId("SP_800_171_" + elem.element_identifier);
             control.setClazz(elem.element_type);
+            control.setTitle(createMarkupLineEscaped(elem.element_identifier));
 
             // Some 800-171 security requirements don't have titles (overall security requirement VS a subsection of a security requirement)
             // Don't add titles unless it's human-readable form
