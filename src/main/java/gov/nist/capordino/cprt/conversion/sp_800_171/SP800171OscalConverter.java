@@ -29,8 +29,8 @@ import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Citation;
 
 public class SP800171OscalConverter extends AbstractOscalConverter {
     protected void assertFrameworkIdentifier() throws InvalidFrameworkIdentifier {
-        if (!cprtMetadataVersion.frameworkIdentifier.equals("SP_800_171_3_0_0")) {
-            throw new InvalidFrameworkIdentifier("SP_800_171_3_0_0", cprtMetadataVersion.frameworkIdentifier);
+        if (!cprtMetadataVersion.frameworkIdentifier.equals("SP_800_171")) {
+            throw new InvalidFrameworkIdentifier("SP_800_171", cprtMetadataVersion.frameworkIdentifier);
         }
     }
 

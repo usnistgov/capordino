@@ -23,8 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
-import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
-import gov.nist.capordino.cprt.conversion.sp_800_171.SP800171OscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -63,12 +61,9 @@ public class SP800171OscalConverterTest {
         root = mapper.readValue(Cprt800171Sample, CprtRoot.class);
 
         version.name = "Protecting Controlled Unclassified Information in Nonfederal Systems and Organizations";
-        version.frameworkIdentifier = "SP_800_171_3_0_0";
+        version.frameworkIdentifier = "SP_800_171";
         version.frameworkWebSite = "https://csrc.nist.gov/pubs/sp/800/171/r3/final";
         version.frameworkVersionIdentifier = "SP_800_171_3_0_0";
-        // version.interfaceIdentifier = "CSF_2";
-        // version.frameworkVersionName = "The NIST Cybersecurity Framework 2.0 Draft (SAMPLE)";
-        // version.shortName = "Cybersecurity Framework v2.0 SAMPLE";
         version.version = "Version 3.0.0";
         version.publicationReleaseDate = new Date();
     }
@@ -92,27 +87,27 @@ public class SP800171OscalConverterTest {
         assertTrue(results.isPassing());
     }
 
-    // @Test
-    // @Order(3)
-    // @Tag("Online")
-    // void testConvertCsf20ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
-    //     CprtApiClient client = new CprtApiClient();
-    //     CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("CSF_2_0_0")).findFirst().orElseThrow();
+    @Test
+    @Order(3)
+    @Tag("Online")
+    void testConvertSP800171ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+        CprtApiClient client = new CprtApiClient();
+        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_171_3_0_0")).findFirst().orElseThrow();
 
-    //     Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
-    //     Catalog catalog = converter.buildCatalog();
+        SP800171OscalConverter converter = new SP800171OscalConverter(version);
+        Catalog catalog = converter.buildCatalog();
 
-    //     // Write to a file and load again to ensure the serialization and deserialization works
-    //     ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-    //     serializer.serialize(catalog, Cprt800171OutFilePath);
-    //     assertNotNull(bindingContext.loadCatalog(Cprt800171OutFilePath));
-    // }
+        // Write to a file and load again to ensure the serialization and deserialization works
+        ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
+        serializer.serialize(catalog, Cprt800171OutFilePath);
+        assertNotNull(bindingContext.loadCatalog(Cprt800171OutFilePath));
+    }
 
-    // @Test
-    // @Order(4)
-    // @Tag("Online")
-    // void testValidateCsf20Oscal() throws IOException {
-    //     IValidationResult results = bindingContext.validateWithConstraints(Cprt800171OutFilePath);
-    //     assertTrue(results.isPassing());
-    // }
+    @Test
+    @Order(4)
+    @Tag("Online")
+    void testValidateSP800171ToOscal() throws IOException {
+        IValidationResult results = bindingContext.validateWithConstraints(Cprt800171OutFilePath);
+        assertTrue(results.isPassing());
+    }
 }
