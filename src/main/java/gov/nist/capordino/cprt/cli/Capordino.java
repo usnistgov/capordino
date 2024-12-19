@@ -4,13 +4,17 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Date;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
+import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
+import gov.nist.capordino.cprt.conversion.UnimplementedFrameworkIdentifier;
 import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
+import gov.nist.capordino.cprt.conversion.sp_800_171.SP800171OscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -23,28 +27,23 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "capordino", version = "Capordino 1.0", mixinStandardHelpOptions = true) 
-public class Capordino implements Runnable { 
-    // Specify source or target
-    // @Option(names = { "-tgt", "--target" }, description = "Target framework", required = true)
-    // private boolean target;
-    
-    // @Option(names = { "-src", "--source" }, description = "Source framework", required = true)
-    // private boolean source;
+@Command(name = "capordino", version = "Capordino 1.1", mixinStandardHelpOptions = true) 
+public class Capordino implements Runnable {
+    public final String CSF20_IDENTIFIER = "CSF_2_0_0";
+    public final String SP800171_IDENTIFIER = "SP_800_171_3_0_0";
+    public final String[] IMPLEMENTED_IDENTIFIERS = {CSF20_IDENTIFIER, SP800171_IDENTIFIER};
 
-    // If desired, specify file path for framework json
-    // @Option(names = { "-f", "--file" }, description = "File path for framework json")
-    // private boolean file;
-
-    // File path if -f option is used
-    // @Parameters(paramLabel = "<file path>", 
-            //    description = "File path for framework json")
-    private String filepath = "src/test/resources/cprt_csf20_sample.json";
+    // // File path if -f option is used
+    // @Option(names = {"-f", "--file-path"}, defaultValue = "",
+    //             description = "File path for framework json, if already downloaded from CPRT")
+    // private String filepath;
 
     // Framework version identifier to build catalog
     @Parameters(paramLabel = "<framework version identifier>",
                 description = "Framework version identifier to build catalog for, REQUIRED")
-    private String framework_version_identifier; // = "CSF_2_0_0";
+    private String framework_version_identifier;
+    // CSF_2_0_0
+    // SP_800_171_3_0_0
 
     // Output directory
     @Option(names = {"-o", "--output-directory"}, defaultValue = "src/test/resources",
@@ -53,58 +52,58 @@ public class Capordino implements Runnable {
 
     @Override
     public void run() { 
-        // Csf20CprtOscalConverterTest.java
-
         // Initialize
-        File csfCprtSample = new File(filepath);
+        // File cprtSample = new File(filepath);
 
         OscalBindingContext bindingContext = OscalBindingContext.instance();
 
         Path tempOutDirectory = FileSystems.getDefault().getPath(output_directory);
 
-        Path sampleOutFilePath = tempOutDirectory.resolve("csf20-sample_catalog.xml");
-        Path csf20OutFilePath = tempOutDirectory.resolve("csf20_catalog.xml");
+        Path outFilePath = tempOutDirectory.resolve("catalog.xml");
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
 
-        ObjectMapper mapper = new ObjectMapper();
+        // ObjectMapper mapper = new ObjectMapper();
         
-        //Convert CSF 20 to OSCAL
+        //Convert CPRT to OSCAL
         CprtApiClient client = new CprtApiClient();
         CprtMetadataVersion version = new CprtMetadataVersion();
-        version.name = "Cybersecurity Framework";
-        version.frameworkIdentifier = "CSF";
-        version.frameworkWebSite = "https://www.nist.gov/cyberframework";
-        version.frameworkVersionIdentifier = "CSF_2_0_0";
-        version.interfaceIdentifier = "CSF_2";
-        version.frameworkVersionName = "The NIST Cybersecurity Framework 2.0 Draft (SAMPLE)";
-        version.shortName = "Cybersecurity Framework v2.0 SAMPLE";
-        version.version = "Version 2.0.0";
-        version.publicationReleaseDate = new Date();
 
         try {
-            CprtRoot root = mapper.readValue(csfCprtSample, CprtRoot.class);
-
-            // Take in framework version from CLI
-            version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
-
-            // Build catalog
-            Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
-            Catalog catalog = converter.buildCatalog();
-
-            // Serialize and write catalog to a file
-            ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-            serializer.serialize(catalog, csf20OutFilePath);
-
+            if (Arrays.asList(IMPLEMENTED_IDENTIFIERS).contains(framework_version_identifier)) {
+                // Take in framework version from CLI
+                version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+    
+                // Build catalog
+                AbstractOscalConverter converter = null;
+                if (framework_version_identifier.equals(CSF20_IDENTIFIER)) {
+                    converter = new Csf20CprtOscalConverter(version);
+                }
+                else if (framework_version_identifier.equals(SP800171_IDENTIFIER)) {
+                    converter = new SP800171OscalConverter(version);
+                }
+                else {
+                    throw new UnimplementedFrameworkIdentifier(framework_version_identifier);
+                }
+                
+                Catalog catalog = converter.buildCatalog();
+    
+                // Serialize and write catalog to a file
+                ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
+                serializer.serialize(catalog, outFilePath);
+            }
+            else {
+                throw new UnimplementedFrameworkIdentifier(framework_version_identifier);
+            }
         } catch (IOException | InterruptedException ie) {
             ie.printStackTrace();
         } catch (InvalidFrameworkIdentifier ifi) {
             // Additional handling of InvalidFrameworkIdentifer
 
             ifi.printStackTrace();
+        } catch (UnimplementedFrameworkIdentifier ufi) {
+            ufi.printStackTrace();
         }
-        
-        
     }
 
     public static void main(String[] args) {
