@@ -40,15 +40,19 @@ public class Capordino implements Runnable {
 
     // Framework version identifier to build catalog
     @Parameters(paramLabel = "<framework version identifier>",
-                description = "Framework version identifier to build catalog for, REQUIRED")
+                description = "REQUIRED: framework version identifier to build catalog for\n" + 
+                "Implemented: " + 
+                CSF20_IDENTIFIER + ", " + 
+                SP800171_IDENTIFIER
+                )
     private String framework_version_identifier;
     // CSF_2_0_0
     // SP_800_171_3_0_0
 
     // Output directory
-    @Option(names = {"-o", "--output-directory"}, defaultValue = "src/test/resources",
-                description = "Directory for capordino tool output (built catalog), default is \"src/test/resources\"")
-    private String output_directory; // = "src/test/resources";
+    @Option(names = {"-o", "--output-directory"}, defaultValue = "./catalogs/",
+                description = "Directory for capordino tool output (built catalog), default is \"./catalogs/\"")
+    private String output_directory;
 
     @Override
     public void run() { 
@@ -59,7 +63,7 @@ public class Capordino implements Runnable {
 
         Path tempOutDirectory = FileSystems.getDefault().getPath(output_directory);
 
-        Path outFilePath = tempOutDirectory.resolve("catalog.xml");
+        Path outFilePath = tempOutDirectory.resolve(framework_version_identifier + "_catalog.xml");
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
 
@@ -98,7 +102,7 @@ public class Capordino implements Runnable {
         } catch (IOException | InterruptedException ie) {
             ie.printStackTrace();
         } catch (InvalidFrameworkIdentifier ifi) {
-            // Additional handling of InvalidFrameworkIdentifer
+            // Additional handling of InvalidFrameworkIdentifier
 
             ifi.printStackTrace();
         } catch (UnimplementedFrameworkIdentifier ufi) {
@@ -107,7 +111,7 @@ public class Capordino implements Runnable {
     }
 
     public static void main(String[] args) {
-        int exitCode = new CommandLine(new Capordino()).execute(args); 
-        System.exit(exitCode); 
+        int exitCode = new CommandLine(new Capordino()).execute(args);
+        System.exit(exitCode);
     }
 }
