@@ -346,11 +346,16 @@ public abstract class AbstractOscalConverter {
         return buildProp("status", "withdrawn");
     }
 
+    protected String getEscapedIdentifier(String identifier) {
+        String escaped_identifier = escapeSquareBracketsWithPeriods(identifier);
+        return escaped_identifier;
+    }
     
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
-        elementProse.setId(element.element_identifier + "_" + name);
+        elementProse.setId(getEscapedIdentifier(name + "_" + element.element_identifier));
+
         elementProse.setName(name);
 
         // Parse ODPs before setting text
@@ -541,7 +546,7 @@ public abstract class AbstractOscalConverter {
     protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix) {
         ControlPart part = new ControlPart();
         part.setName("assessment-method");
-        part.setId(element.element_identifier + "_" + part.getName() + "_" + element.element_type);
+        part.setId(getEscapedIdentifier(element.element_identifier + "_" + part.getName() + "_" + element.element_type));
         part.addProp(buildProp("method", element.element_type.toUpperCase()));
 
         // Assessment Methods contain Assessment Objects
