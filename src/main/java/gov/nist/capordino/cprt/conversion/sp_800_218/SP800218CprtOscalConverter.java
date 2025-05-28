@@ -12,10 +12,12 @@ import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
+import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.Property;
 
 public class SP800218CprtOscalConverter extends AbstractOscalConverter {
@@ -45,6 +47,7 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
     private final String TASK_ELEMENT_TYPE = "task";
     private final String IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE = "example";
     private final String REF_ITEM_ELEMENT_TYPE = "ref_item";
+    private final String REF_DOC_ELEMENT_TYPE = "ref_doc";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String REFERENCE_RELATIONSHIP_TYPE = "reference";
@@ -60,19 +63,7 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
         catalog.setGroups(buildGroups(catalog));
     }
 
-    protected ControlPart buildPartFromElementText(CprtElement element, String name) {
-        ControlPart elementProse = new ControlPart();
-        elementProse.setId(element.element_identifier + "_" + name);
-        elementProse.setName(name);
-        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
-        return elementProse;
-    }
-
-    protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
-        ControlPart part = buildPartFromElementText(element, name);
-        part.setNs(namespace);
-        return part;
-    }
+    
 
     /**
      * Build the top level group of the catalog, represented in CPRT as groups.
@@ -108,6 +99,8 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
             Control control = new Control();
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
+
+            control.addProp(buildProp("sort-id", elem.element_identifier));
             control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
             control.addPart(buildPartFromElementText(elem, "statement"));
@@ -142,17 +135,36 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
             parts.addAll(buildNotionalImplementationExamples(catalog, elem.getGlobalIdentifier()));
             control.setParts(parts);
 
-            // control.setProps(buildSubcategoryRiskPartyProps(elem.getGlobalIdentifier()));
+            control.setLinks(createRefItemLinks(catalog, elem.getGlobalIdentifier()));
 
-            // Property sortProp = buildSortProp(elem.getGlobalIdentifier());
-            // if (sortProp != null) {
-            //     control.addProp(sortProp);
-            // }
 
             control.addProp(buildLabelProp(elem.element_identifier));
 
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    // Build RLinks to references, represented in CPRT site as ref items (ref_items element type, external_reference relationship type)
+    private List<Link> createRefItemLinks(Catalog catalog, String parentId) {
+        List<CprtElement> ref_item_elements = getRelatedElementsBySourceIdWithType(parentId, REF_ITEM_ELEMENT_TYPE, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<Link> ref_item_links = new ArrayList<Link>();
+        for (CprtElement ref_item : ref_item_elements) {
+            List<CprtElement> ref_doc_elements = getRelatedElementsBySourceIdWithType(ref_item.getGlobalIdentifier(), REF_DOC_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            
+            for (CprtElement ref_doc : ref_doc_elements) {
+                Resource refItemResource = buildResource(ref_doc);
+                Link link = newLinkRel(catalog, refItemResource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+                link.setText(MarkupLine.fromMarkdown(ref_item.text));
+                ref_item_links.add(link);
+            }
+        }
+
+        return ref_item_links;
     }
 
     private List<ControlPart> buildNotionalImplementationExamples(Catalog catalog, String parentId) {

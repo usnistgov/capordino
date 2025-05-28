@@ -327,7 +327,7 @@ public abstract class AbstractOscalConverter {
     }
 
     // Escape square brackets in input string, keep square brackets
-    protected String escapeSquareBrackets(String input) {
+    protected String escapeSquareBracketsWithBackslashes(String input) {
         return input.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]");
     }
 
@@ -382,7 +382,7 @@ public abstract class AbstractOscalConverter {
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
             String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
-            String escaped_odp_identifier = escapeSquareBrackets(odp_identifier);
+            String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
 
             // Only replace the ODP that matches this identifier
             String specific_odp_pattern = "<" + escaped_odp_identifier + ": .+?>"; 
@@ -579,7 +579,7 @@ public abstract class AbstractOscalConverter {
 
         // Publication information
         Citation citation = new Citation();
-        citation.setText(MarkupLine.fromMarkdown(element.title));
+        citation.setText(MarkupLine.fromMarkdown(escapeSquareBracketsWithBackslashes(element.title)));
         resource.setCitation(citation);
 
         // Link to publication
