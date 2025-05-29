@@ -22,8 +22,8 @@ import gov.nist.secauto.oscal.lib.model.Property;
 
 public class SP800218CprtOscalConverter extends AbstractOscalConverter {
     protected void assertFrameworkIdentifier() throws InvalidFrameworkIdentifier {
-        if (!cprtMetadataVersion.frameworkIdentifier.equals("SP_800_218")) {
-            throw new InvalidFrameworkIdentifier("SP_800_218", cprtMetadataVersion.frameworkIdentifier);
+        if (!cprtMetadataVersion.frameworkIdentifier.equals("SSDF")) {
+            throw new InvalidFrameworkIdentifier("SSDF", cprtMetadataVersion.frameworkIdentifier);
         }
     }
 
@@ -48,6 +48,7 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
     private final String IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE = "example";
     private final String REF_ITEM_ELEMENT_TYPE = "ref_item";
     private final String REF_DOC_ELEMENT_TYPE = "ref_doc";
+    private final String SORT_ELEMENT_TYPE = "sort";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String REFERENCE_RELATIONSHIP_TYPE = "reference";
@@ -78,11 +79,15 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
                 group.setId(elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
-                group.addProp(buildProp("sort-id", elem.element_identifier));
 
                 group.addPart(buildPartFromElementText(elem, "overview"));
                 // For 800-218 practice, create an OSCAL control
                 group.setControls(buildPracticeControls(catalog, elem.getGlobalIdentifier()));
+
+                Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+                if (sortProp != null) {
+                    group.addProp(sortProp);
+                }
 
                 group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
@@ -100,12 +105,16 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
             control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
 
-            control.addProp(buildProp("sort-id", elem.element_identifier));
             control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
             control.addPart(buildPartFromElementText(elem, "statement"));
             // For 800-218 task, create OSCAL subcontrol
             control.setControls(buildTaskControls(catalog, elem.getGlobalIdentifier()));
+
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            if (sortProp != null) {
+                control.addProp(sortProp);
+            }
 
             control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
@@ -137,6 +146,10 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
 
             control.setLinks(createRefItemLinks(catalog, elem.getGlobalIdentifier()));
 
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            if (sortProp != null) {
+                control.addProp(sortProp);
+            }
 
             control.addProp(buildLabelProp(elem.element_identifier));
 
@@ -171,8 +184,27 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart part = buildPartFromElementText(elem, "example");//  CSF_URI);
             part.setId(elem.element_identifier);
+            part.setTitle(createMarkupLineEscaped(elem.title));
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private Property buildSortProp(String parentId) {
+        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        if (sorts.size() == 0) {
+            return null;
+        }
+
+        if (sorts.size() > 1) {
+            throw new IllegalStateException("More than one sort found for function " + parentId);
+        }
+
+        CprtElement sort = sorts.get(0);
+
+        Property sortProp = new Property();
+        sortProp.setName("sort-id");
+        sortProp.setValue(sort.title);
+        return sortProp;
     }
    
 }

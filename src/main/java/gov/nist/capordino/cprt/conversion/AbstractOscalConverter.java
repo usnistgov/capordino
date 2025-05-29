@@ -365,7 +365,7 @@ public abstract class AbstractOscalConverter {
     }
 
     protected String parseODPInElementText(CprtElement element) {
-        return "";
+        return element.text;
     }
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {

@@ -15,6 +15,7 @@ import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.conversion.UnimplementedFrameworkIdentifier;
 import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_171.SP800171OscalConverter;
+import gov.nist.capordino.cprt.conversion.sp_800_218.SP800218CprtOscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -31,7 +32,8 @@ import picocli.CommandLine.Parameters;
 public class Capordino implements Runnable {
     public final String CSF20_IDENTIFIER = "CSF_2_0_0";
     public final String SP800171_IDENTIFIER = "SP_800_171_3_0_0";
-    public final String[] IMPLEMENTED_IDENTIFIERS = {CSF20_IDENTIFIER, SP800171_IDENTIFIER};
+    public final String SP800218_IDENTIFIER = "SP_800_218_1_1_0";
+    public final String[] IMPLEMENTED_IDENTIFIERS = {CSF20_IDENTIFIER, SP800171_IDENTIFIER, SP800218_IDENTIFIER};
 
     // // File path if -f option is used
     // @Option(names = {"-f", "--file-path"}, defaultValue = "",
@@ -43,11 +45,13 @@ public class Capordino implements Runnable {
                 description = "REQUIRED: framework version identifier to build catalog for\n" + 
                 "Implemented: " + 
                 CSF20_IDENTIFIER + ", " + 
-                SP800171_IDENTIFIER
+                SP800171_IDENTIFIER + ", " +
+                SP800218_IDENTIFIER
                 )
     private String framework_version_identifier;
     // CSF_2_0_0
     // SP_800_171_3_0_0
+    // SP_800_218_1_1_0
 
     // Output directory
     @Option(names = {"-o", "--output-directory"}, defaultValue = "./catalogs/",
@@ -85,6 +89,9 @@ public class Capordino implements Runnable {
                 }
                 else if (framework_version_identifier.equals(SP800171_IDENTIFIER)) {
                     converter = new SP800171OscalConverter(version);
+                }
+                else if (framework_version_identifier.equals(SP800218_IDENTIFIER)) {
+                    converter = new SP800218CprtOscalConverter(version);
                 }
                 else {
                     throw new UnimplementedFrameworkIdentifier(framework_version_identifier);
