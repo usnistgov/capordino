@@ -181,7 +181,7 @@ public abstract class AbstractOscalConverter {
         metadata.setLastModified(ZonedDateTime.now());
         
         metadata.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
-        metadata.setVersion(cprtMetadataVersion.version); // 1.0.0 as OSCAL document version, don't use cprt version
+        metadata.setVersion("1.0.0"); // 1.0.0 as OSCAL document version, don't use cprt version
         
         metadata.addProp(newCprtProp("framework-identifier", cprtMetadataVersion.frameworkIdentifier));
         metadata.addProp(newCprtProp("framework-version-identifier", cprtMetadataVersion.frameworkVersionIdentifier));
@@ -260,7 +260,7 @@ public abstract class AbstractOscalConverter {
 
             ResponsibleParty contactResponsibleParty = new ResponsibleParty();
             contactResponsibleParty.setRoleId(contactRole.getId());
-            contactResponsibleParty.addPartyUuid(creatorParty.getUuid());
+            contactResponsibleParty.addPartyUuid(publisherParty.getUuid());
             metadata.addResponsibleParty(contactResponsibleParty);
         }
 
