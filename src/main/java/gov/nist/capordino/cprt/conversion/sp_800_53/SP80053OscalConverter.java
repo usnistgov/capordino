@@ -86,6 +86,85 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
-        
+        catalog.setGroups(buildFamilyGroups(catalog));
+    }
+
+    private Property buildSortProp(String parentId) {
+        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        if (sorts.size() == 0) {
+            return null;
+        }
+
+        if (sorts.size() > 1) {
+            throw new IllegalStateException("More than one sort found for function " + parentId);
+        }
+
+        CprtElement sort = sorts.get(0);
+
+        Property sortProp = new Property();
+        sortProp.setName("sort-id");
+        sortProp.setValue(sort.title);
+        return sortProp;
+    }
+    
+
+    /**
+     * Build the top level group of the catalog, represented in CPRT as families.
+     */
+    private List<CatalogGroup> buildFamilyGroups(Catalog catalog) {
+        // Recursively go down tree of elements, to build family groups
+        return cprtRoot.getElements().stream()
+            .filter(elem -> elem.element_type.equals(FAMILY_ELEMENT_TYPE))
+            .map(elem -> {
+                // For each 800-53 family, create an OSCAL group
+                CatalogGroup group = new CatalogGroup();
+                group.setId(elem.element_identifier);
+                group.setClazz(elem.element_type);
+                group.setTitle(MarkupLine.fromMarkdown(elem.title));
+
+                // For 800-171 control, create an OSCAL control within this overall family group
+                group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
+
+                Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+                if (sortProp != null) {
+                    group.addProp(sortProp);
+                }
+
+                group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
+                return group;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+
+    // For 800-53 control, create an OSCAL control
+    private List<Control> buildControls(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, CONTROL_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Control control = new Control();
+            control.setId(elem.element_identifier);
+            control.setClazz("SP800-53");
+            control.setTitle(MarkupLine.fromMarkdown(elem.title));
+
+
+           
+
+            List<ControlPart> parts = new ArrayList<ControlPart>();
+            parts.add(buildPartFromElementText(elem, "statement"));
+            
+            
+            // For 800-171 control, create an OSCAL control within this overall family group
+            // group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
+
+            // For 800-171 control enhancement, create an OSCAL control within this overall family group
+
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            if (sortProp != null) {
+                control.addProp(sortProp);
+            }
+
+            control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+            
+            return control;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
