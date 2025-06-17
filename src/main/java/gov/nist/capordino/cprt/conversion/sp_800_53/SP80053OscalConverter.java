@@ -160,11 +160,11 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                     control.addProp(buildWithdrawnProp());
 
                     // Create links to the control(s) this withdrawn control points to
-                    // List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
+                    List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
 
-                    // for (Link link : links) {
-                    //     control.addLink(link);
-                    // }
+                    for (Link link : links) {
+                        control.addLink(link);
+                    }
                 }
                 // If not withdrawn, build a statement part
                 else {
@@ -216,7 +216,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
     // Get the destination identifier of a given withdraw_reason element (get the control a withdrawn control points to)
     private List<String> getDestWithdrawIdentifiers(String parentId, String relationType) {
         List<String> dest_withdraw_identifiers = getDestinationIdWithType(parentId, relationType).map(identifier -> {
-            return identifier;
+            return "#" + identifier;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         return dest_withdraw_identifiers;
