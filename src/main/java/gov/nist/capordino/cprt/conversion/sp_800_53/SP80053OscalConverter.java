@@ -145,13 +145,41 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
             control.setClazz("SP800-53");
             control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
-
-           
-
             List<ControlPart> parts = new ArrayList<ControlPart>();
-            parts.add(buildPartFromElementText(elem, "statement"));
-            
-            
+
+            // Control level doesn't contain information about whether this control is withdrawn
+            // Must go down one more level to Control Statement
+            List<CprtElement> topControlStatements = getRelatedElementsBySourceIdWithType(elem.getGlobalIdentifier(), CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(topControlStatement -> {
+                return topControlStatement;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            for (CprtElement topControlStatement : topControlStatements) {
+                
+                // If withdrawn, build a prop
+                if (topControlStatement.text.equals("Withdrawn")) {
+                    control.addProp(buildWithdrawnProp());
+
+                    // Create links to the control(s) this withdrawn control points to
+                    // List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
+
+                    // for (Link link : links) {
+                    //     control.addLink(link);
+                    // }
+                }
+                // If not withdrawn, build a statement part
+                else {
+                    // Use topControlStatement instead of elem to skip one level in the tree
+                    // If this is not done, it creates an extra ControlPart level in the catalog
+                    ControlPart statementPart = buildPartFromElementText(topControlStatement, "statement");
+                    statementPart.setId(elem.element_identifier + "_smt"); 
+                    statementPart.setParts(buildControlStatementParts(catalog, topControlStatement.getGlobalIdentifier()));
+
+                    parts.add(statementPart);
+                }
+            }
+
+            control.setParts(parts);
+
             // For 800-171 control, create an OSCAL control within this overall family group
             // group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
 
@@ -163,8 +191,59 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
             }
 
             control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
-            
+
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> buildControlStatementParts(Catalog catalog, String parentId) {
+        try {
+            return getRelatedElementsBySourceIdWithType(parentId, CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                ControlPart part = buildPartFromElementText(elem, "item");
+                part.setId(elem.element_identifier.substring(4)); // Remove CST_ prefix
+                
+                // Recursively call to get all sub parts
+                part.setParts(buildControlStatementParts(catalog, elem.getGlobalIdentifier()));
+
+                part.addProp(buildLabelProp(elem.title));
+                return part;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<ControlPart>();
+        }
+    }
+
+    // Get the destination identifier of a given withdraw_reason element (get the control a withdrawn control points to)
+    private List<String> getDestWithdrawIdentifiers(String parentId, String relationType) {
+        List<String> dest_withdraw_identifiers = getDestinationIdWithType(parentId, relationType).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        return dest_withdraw_identifiers;
+        
+    }
+
+    // Create links to the control(s) a given withdrawn control points to
+    private List<Link> createWithdrawnLinks(Catalog catalog, String parentId) {
+        // Get the withdraw_reason element associated with the given element
+        List<String> withdraw_identifiers = getRelatedElementsBySourceIdWithType(parentId, WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem.getGlobalIdentifier();
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<Link> links = new ArrayList<Link>();
+        
+        // For each withdraw relationship type, create links of that type
+        for (String relationType : WITHDRAW_RELATIONSHIPS) {
+            List<String> dest_withdraw_identifiers = new ArrayList<String>();
+
+            // Get the control a withdrawn control points to
+            for (String withdraw_identifier : withdraw_identifiers) {
+                dest_withdraw_identifiers.addAll(getDestWithdrawIdentifiers(withdraw_identifier, relationType));
+            }
+
+            links.addAll(createLinks(dest_withdraw_identifiers, relationType));
+        }
+
+        return links;
     }
 }
