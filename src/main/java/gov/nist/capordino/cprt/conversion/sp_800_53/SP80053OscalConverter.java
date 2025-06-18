@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -149,9 +150,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
             // Control level doesn't contain information about whether this control is withdrawn
             // Must go down one more level to Control Statement
-            List<CprtElement> topControlStatements = getRelatedElementsBySourceIdWithType(elem.getGlobalIdentifier(), CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(topControlStatement -> {
-                return topControlStatement;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            List<CprtElement> topControlStatements = getElementsSafely(elem.getGlobalIdentifier(), CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
 
             for (CprtElement topControlStatement : topControlStatements) {
                 
@@ -168,23 +167,43 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 }
                 // If not withdrawn, build a statement part
                 else {
+                    // ODPs, assignment parameters
+                    // control.setParams(createParams(elem));
+
                     // Use topControlStatement instead of elem to skip one level in the tree
                     // If this is not done, it creates an extra ControlPart level in the catalog
                     ControlPart statementPart = buildPartFromElementText(topControlStatement, "statement");
                     statementPart.setId(elem.element_identifier + "_smt"); 
                     statementPart.setParts(buildControlStatementParts(catalog, topControlStatement.getGlobalIdentifier()));
-
                     parts.add(statementPart);
+
+                    // CPRT discussion -> OSCAL guidance
+                    parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
+
+                    // Assessment objectives
+                    parts.addAll(createAssessmentObjectiveParts(catalog, topControlStatement.getGlobalIdentifier()));
+                    
+                    // Assessment methods and objects
+                    // parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
+
+
+
+                    // List<Link> links = new ArrayList<Link>();
+                    // Source Controls
+                    // links.addAll(createSourceControlsLinks(catalog, elem.getGlobalIdentifier()));
+                    // Supporting Publications
+                    // links.addAll(createSupportingPublicationsLinks(catalog, elem.getGlobalIdentifier()));
+                    
+                    // control.setLinks(links);
                 }
             }
 
             control.setParts(parts);
 
-            // For 800-171 control, create an OSCAL control within this overall family group
+            // 800-53 control enhancements
             // group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
 
-            // For 800-171 control enhancement, create an OSCAL control within this overall family group
-
+            
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
             if (sortProp != null) {
                 control.addProp(sortProp);
@@ -245,5 +264,60 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }
 
         return links;
+    }
+
+
+    private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
+            gdn_part.setId(getEscapedIdentifier(elem.element_identifier.substring(2) + "_gdn"));
+            return gdn_part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+
+    private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
+        
+        // List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            // ControlPart part =  buildAssessmentObjectivePart(elem);
+        //     return part;
+        // }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        // return objective_parts;
+
+        List<CprtElement> elements = getElementsSafely(parentId, DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
+        if(! elements.isEmpty()) {
+            return elements.stream().map(elem -> {
+                ControlPart part = buildAssessmentObjectivePart(elem);
+                part.setId(elem.element_identifier.substring(3) + "_obj");
+                
+                part.addProp(buildLabelProp(elem.element_identifier.substring(3)));
+                return part;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        }
+        else {
+            List<CprtElement> nextControlStatements = getElementsSafely(parentId, CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
+
+            List<ControlPart> subObjectives = new ArrayList<ControlPart>();
+
+            for (CprtElement nextControlStatement : nextControlStatements) {
+                // Recursively call to get all sub parts
+                ControlPart part = buildAssessmentObjectivePart(nextControlStatement);
+                part.setParts(createAssessmentObjectiveParts(catalog, nextControlStatement.getGlobalIdentifier()));
+                subObjectives.add(part);
+            }
+
+            return subObjectives;
+        }
+    }
+
+    private List<CprtElement> getElementsSafely(String parentId, String elemType, String relationType) {
+        try {
+            return getRelatedElementsBySourceIdWithType(parentId, elemType, relationType).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (Exception e) {
+            
+            return new ArrayList<CprtElement>();
+        }
     }
 }
