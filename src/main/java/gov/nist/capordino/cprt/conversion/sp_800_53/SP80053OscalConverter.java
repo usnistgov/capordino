@@ -14,6 +14,7 @@ import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.pojo.CprtElement;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
+import gov.nist.capordino.cprt.pojo.CprtRelationship;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
@@ -80,6 +81,10 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
     private final String[] WITHDRAW_RELATIONSHIPS = new String[] {INCORPORATED_INTO_RELATIONSHIP_TYPE, MOVED_TO_RELATIONSHIP_TYPE};
 
+    private final String SP_800_53_CLASS = "sp800-53";
+    private final String SP_800_53_A_CLASS = "sp800-53a";
+    private final String SP_800_53_ENHANCEMENT_CLASS = "SP800-53-enhancement";
+
     /**
      * The URI to use for CSF-specific props.
      */
@@ -143,7 +148,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, CONTROL_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
             control.setId(elem.element_identifier);
-            control.setClazz("SP800-53");
+            control.setClazz(SP_800_53_CLASS);
             control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
             List<ControlPart> parts = new ArrayList<ControlPart>();
@@ -181,7 +186,20 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                     parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
 
                     // Assessment objectives
-                    parts.addAll(createAssessmentObjectiveParts(catalog, topControlStatement.getGlobalIdentifier()));
+                    List<ControlPart> subObjectives = createAssessmentObjectiveParts(catalog, topControlStatement.getGlobalIdentifier());
+                    if (subObjectives.size() == 1) {
+                        parts.addAll(subObjectives);
+                    }
+                    else {
+                        ControlPart topObjective = buildAssessmentObjectivePart(topControlStatement);
+                        topObjective.setId(elem.element_identifier + "_obj");
+                        topObjective.setProse(null);
+                        topObjective.setParts(subObjectives);
+                        Property prop = buildLabelProp(elem.element_identifier);
+                        prop.setClazz(SP_800_53_A_CLASS);
+                        topObjective.addProp(prop);
+                        parts.add(topObjective);
+                    }
                     
                     // Assessment methods and objects
                     // parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
@@ -275,22 +293,29 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
+    protected String removeSquareBrackets(String input) {
+        return input.replaceAll("\\[", "").replaceAll("\\]", "");
+    }
+
 
     private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
-        
-        // List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
-            // ControlPart part =  buildAssessmentObjectivePart(elem);
-        //     return part;
-        // }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        // return objective_parts;
-
         List<CprtElement> elements = getElementsSafely(parentId, DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
         if(! elements.isEmpty()) {
             return elements.stream().map(elem -> {
                 ControlPart part = buildAssessmentObjectivePart(elem);
-                part.setId(elem.element_identifier.substring(3) + "_obj");
-                
-                part.addProp(buildLabelProp(elem.element_identifier.substring(3)));
+                part.setId(removeSquareBrackets(elem.element_identifier.substring(3) + "_obj"));
+                Property prop = buildLabelProp(elem.element_identifier.substring(3));
+                prop.setClazz(SP_800_53_A_CLASS);
+                part.addProp(prop);
+
+
+                // Add assessment-for link to the subcontrol item this objective assesses
+                part.setLinks(new ArrayList<Link>());
+                List<CprtRelationship> assessment_for_relationships = cprtRoot.getRelationshipsByDestinationElementId(elem.getGlobalIdentifier());
+                for (CprtRelationship assessment_for_relationship : assessment_for_relationships) {
+                    part.addLink(createLink("#" + assessment_for_relationship.source_element_identifier.substring(4), "assessment-for"));
+                }
+
                 return part;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         }
@@ -301,7 +326,13 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
             for (CprtElement nextControlStatement : nextControlStatements) {
                 // Recursively call to get all sub parts
+                // Build a tree of assessment objectives
                 ControlPart part = buildAssessmentObjectivePart(nextControlStatement);
+                part.setId(nextControlStatement.element_identifier.substring(4) + "_obj");
+                part.setProse(null);
+                Property prop = buildLabelProp(nextControlStatement.element_identifier.substring(4));
+                prop.setClazz(SP_800_53_A_CLASS);
+                part.addProp(prop);
                 part.setParts(createAssessmentObjectiveParts(catalog, nextControlStatement.getGlobalIdentifier()));
                 subObjectives.add(part);
             }
