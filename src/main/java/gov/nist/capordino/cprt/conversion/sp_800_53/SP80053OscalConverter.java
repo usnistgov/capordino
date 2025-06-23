@@ -283,7 +283,25 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
         return links;
     }
+    
+    // Replace <ODP_id> with <insert> in text
+    // Use when ODP id is explicitly stated: asssessment objective
+    @Override
+    protected String insertExplicitParams(String text) {
+        List<String> odp_identifiers = get_odp_identifiers(text, "<(.+?) .+?>");
+        
+        // Replace ODP with insert param
+        for (String odp_identifier : odp_identifiers) {
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier);
+            String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
 
+            // Only replace the ODP that matches this identifier
+            String specific_odp_pattern = "<" + escaped_odp_identifier + " .+?>";
+            text = text.replaceAll(specific_odp_pattern, insert);
+        }
+
+        return text;
+    }
 
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
