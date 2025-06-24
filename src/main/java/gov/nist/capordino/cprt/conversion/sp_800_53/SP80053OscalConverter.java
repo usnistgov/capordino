@@ -95,8 +95,8 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         catalog.setGroups(buildFamilyGroups(catalog));
     }
 
-    private Property buildSortProp(String parentId) {
-        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    private Property buildSortProp(String parentId, String elemType) {
+        List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         if (sorts.size() == 0) {
             return null;
         }
@@ -131,7 +131,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 // For 800-171 control, create an OSCAL control within this overall family group
                 group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
 
-                Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+                Property sortProp = buildSortProp(elem.getGlobalIdentifier(), SORT_ELEMENT_TYPE);
                 if (sortProp != null) {
                     group.addProp(sortProp);
                 }
@@ -222,7 +222,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
             // group.setControls(buildControls(catalog, elem.getGlobalIdentifier()));
 
             
-            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier(), CONTROL_NAME_SORT_ELEMENT_TYPE);
             if (sortProp != null) {
                 control.addProp(sortProp);
             }
