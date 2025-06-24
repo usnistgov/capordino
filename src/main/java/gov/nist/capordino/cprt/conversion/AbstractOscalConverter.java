@@ -328,6 +328,17 @@ public abstract class AbstractOscalConverter {
             });
     }
 
+    protected List<CprtElement> getElementsSafely(String parentId, String elemType, String relationType) {
+        try {
+            return getRelatedElementsBySourceIdWithType(parentId, elemType, relationType).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (Exception e) {
+            
+            return new ArrayList<CprtElement>();
+        }
+    }
+
     /**
      * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
      */
@@ -342,6 +353,17 @@ public abstract class AbstractOscalConverter {
     // Escape square brackets in input string, keep square brackets
     protected String escapeSquareBracketsWithBackslashes(String input) {
         return input.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]");
+    }
+
+    protected String removeSquareBrackets(String input) {
+        return input.replaceAll("\\[", "").replaceAll("\\]", "");
+    }
+
+
+    protected Property buildProp(String name, String value, String namespace) {
+        Property prop = buildProp(name, value);
+        prop.setNs(URI.create(namespace));
+        return prop;
     }
 
     protected Property buildProp(String name, String value) {
@@ -560,7 +582,7 @@ public abstract class AbstractOscalConverter {
         ControlPart part = new ControlPart();
         part.setName("assessment-method");
         part.setId(getEscapedIdentifier(element.element_identifier + "_" + part.getName() + "_" + element.element_type));
-        part.addProp(buildProp("method", element.element_type.toUpperCase()));
+        part.addProp(buildProp("method", element.element_type.toUpperCase(), "http://csrc.nist.gov/ns/rmf"));
 
         // Assessment Methods contain Assessment Objects
         ControlPart objects = new ControlPart();

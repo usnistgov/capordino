@@ -202,7 +202,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                     }
                     
                     // Assessment methods and objects
-                    // parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
+                    parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
 
 
 
@@ -311,11 +311,6 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
-    protected String removeSquareBrackets(String input) {
-        return input.replaceAll("\\[", "").replaceAll("\\]", "");
-    }
-
-
     private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
         List<CprtElement> elements = getElementsSafely(parentId, DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
         if(! elements.isEmpty()) {
@@ -359,14 +354,38 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }
     }
 
-    private List<CprtElement> getElementsSafely(String parentId, String elemType, String relationType) {
-        try {
-            return getRelatedElementsBySourceIdWithType(parentId, elemType, relationType).map(elem -> {
-                return elem;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-        } catch (Exception e) {
-            
-            return new ArrayList<CprtElement>();
-        }
+    // Assessment methods are EXAMINE, INTERVIEW, TEST
+    private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
+        ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart examinePart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            examinePart.setId(elem.element_identifier.substring(2) + "_asm-examine");
+            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + EXAMINE_ELEMENT_TYPE);
+            prop.setClazz(SP_800_53_A_CLASS);
+            examinePart.addProp(prop);
+            return examinePart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart interviewPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            interviewPart.setId(elem.element_identifier.substring(2) + "_asm-interview");
+            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + INTERVIEW_ELEMENT_TYPE);
+            prop.setClazz(SP_800_53_A_CLASS);
+            interviewPart.addProp(prop);
+            return interviewPart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart testPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            testPart.setId(elem.element_identifier.substring(2) + "_asm-test");
+            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + TEST_ELEMENT_TYPE);
+            prop.setClazz(SP_800_53_A_CLASS);
+            testPart.addProp(prop);
+            return testPart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        examine_parts.addAll(interview_parts);
+        examine_parts.addAll(test_parts);
+
+        return examine_parts;
     }
 }
