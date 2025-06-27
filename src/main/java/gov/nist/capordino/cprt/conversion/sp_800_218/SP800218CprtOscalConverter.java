@@ -3,7 +3,9 @@ package gov.nist.capordino.cprt.conversion.sp_800_218;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -53,6 +55,8 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String REFERENCE_RELATIONSHIP_TYPE = "reference";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
+
+    private Map<String, Resource> createdRefDocs = new HashMap<String, Resource>();
 
     /**
      * The URI to use for 800-218-specific props.
@@ -170,10 +174,23 @@ public class SP800218CprtOscalConverter extends AbstractOscalConverter {
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
             
             for (CprtElement ref_doc : ref_doc_elements) {
-                Resource refItemResource = buildResource(ref_doc);
-                Link link = newLinkRel(catalog, refItemResource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
-                link.setText(MarkupLine.fromMarkdown(ref_item.text));
-                ref_item_links.add(link);
+                if (! createdRefDocs.containsKey(ref_doc.element_identifier)) {
+                    Resource refItemResource = buildResource(ref_doc);
+                    Link link = newLinkRel(catalog, refItemResource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+
+                    createdRefDocs.put(ref_doc.element_identifier, refItemResource);
+
+                    link.setText(MarkupLine.fromMarkdown(ref_item.text));
+                    ref_item_links.add(link);
+                }
+                else {
+                    Resource resource = createdRefDocs.get(ref_doc.element_identifier);
+                    Link link = new Link();
+                    link.setHref(URI.create("#" + resource.getUuid().toString()));
+                    link.setRel(EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+                    link.setText(MarkupLine.fromMarkdown(ref_item.text));
+                    ref_item_links.add(link);
+                }
             }
         }
 
