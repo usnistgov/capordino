@@ -3,7 +3,11 @@ package gov.nist.capordino.cprt.conversion.sp_800_171;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
@@ -69,6 +73,9 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     private final String ADDRESSED_BY_RELATIONSHIP_TYPE = "addressed_by";
     private final String[] WITHDRAW_RELATIONSHIPS = new String[] {INCORPORATED_INTO_RELATIONSHIP_TYPE, ADDRESSED_BY_RELATIONSHIP_TYPE};
 
+    private Map<String, Link> createdSourceControls = new HashMap<String, Link>();
+    private Map<String, Link> createdSupportingPublications = new HashMap<String, Link>();
+
     /**
      * The URI to use for CSF-specific props.
      */
@@ -96,14 +103,16 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
                 group.addProp(buildProp("sort-id", elem.element_identifier));
 
-                group.addPart(buildPartFromElementText(elem, "overview"));
+                // group.addPart(buildPartFromElementText(elem, "overview"));
                 // For 800-171 requirement, create an OSCAL group within this overall family group
                 group.setControls(buildRequirementControls(catalog, elem.getGlobalIdentifier()));
 
                 group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 return group;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            })
+            .sorted(Comparator.comparing(CatalogGroup::getId))
+            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
    
@@ -141,7 +150,12 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
                 control.setParams(createParams(elem));
 
                 List<ControlPart> parts = new ArrayList<ControlPart>();
-                parts.add(buildPartFromElementText(elem, "statement"));
+
+                ControlPart statementPart = buildPartFromElementText(elem, "statement");
+                statementPart.setClazz("security_requirement");
+                statementPart.setParts(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
+                parts.add(statementPart);
+
                 // CPRT discussion -> OSCAL guidance
                 parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
 
@@ -160,9 +174,6 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
                 links.addAll(createSupportingPublicationsLinks(catalog, elem.getGlobalIdentifier()));
                 
                 control.setLinks(links);
-
-                // For 800-171 security requirement, create OSCAL control
-                control.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
             }
             
             return control;
@@ -178,13 +189,21 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
         List<Link> source_controls_links = new ArrayList<Link>();
 
         for (String source_control_identifier : source_control_identifiers) {
-            Resource source_control_resource = new Resource();
-            source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
-            Rlink rlink = new Rlink();
-            rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
-            source_control_resource.addRlink(rlink);
+            if (! createdSourceControls.containsKey(source_control_identifier)) {
+                Resource source_control_resource = new Resource();
+                source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
+                Rlink rlink = new Rlink();
+                rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
+                source_control_resource.addRlink(rlink);
 
-            source_controls_links.add(newLinkRel(catalog, source_control_resource, REFERENCE_ELEMENT_TYPE));
+                Link link = newLinkRel(catalog, source_control_resource, REFERENCE_ELEMENT_TYPE);
+                createdSourceControls.put(source_control_identifier, link);
+
+                source_controls_links.add(link);
+            }
+            else {
+                source_controls_links.add(createdSourceControls.get(source_control_identifier));
+            }
         }
 
         return source_controls_links;
@@ -192,10 +211,19 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
 
     // Build RLinks to references, represented in CPRT site as Supporting Publications (reference element type, projection relationship type)
     private List<Link> createSupportingPublicationsLinks(Catalog catalog, String parentId) {
-        return getRelatedElementsBySourceIdWithType(parentId, REFERENCE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            Resource supportingPublicationResource = buildResource(elem);
-            return newLinkRel(catalog, supportingPublicationResource, REFERENCE_ELEMENT_TYPE);
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return getRelatedElementsBySourceIdWithType(parentId, REFERENCE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE)
+            .map(elem -> {
+                if (! createdSupportingPublications.containsKey(elem.element_identifier)) {
+                    Resource supportingPublicationResource = buildResource(elem);
+                    Link link = newLinkRel(catalog, supportingPublicationResource, REFERENCE_ELEMENT_TYPE);
+                    createdSupportingPublications.put(elem.element_identifier, link);
+                    return link;
+                }
+                else {
+                    return createdSupportingPublications.get(elem.element_identifier);
+                }
+            // if exists, link to already existing reference, have a hashmap of identifier and resource object
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
@@ -268,15 +296,15 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     // Assessment methods are EXAMINE, INTERVIEW, TEST
     private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
         ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         examine_parts.addAll(interview_parts);
@@ -324,30 +352,31 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
     /**
      * Build the third level control of the catalog, represented in CPRT as security requirements.
      */
-    private List<Control> buildSecurityRequirementControls(Catalog catalog, String parentId) {
+    private List<ControlPart> buildSecurityRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            Control control = new Control();
-            control.setId("SP_800_171_" + elem.element_identifier);
-            control.setClazz(elem.element_type);
-            control.setTitle(createMarkupLineEscaped(elem.element_identifier));
+            // Control control = new Control();
+            // control.setId("SP_800_171_" + elem.element_identifier);
+            // control.setClazz(elem.element_type);
+            // control.setTitle(createMarkupLineEscaped(elem.element_identifier));
 
             // Some 800-171 security requirements don't have titles (overall security requirement VS a subsection of a security requirement)
             // Don't add titles unless it's human-readable form
 
-            ArrayList<ControlPart> parts = new ArrayList<ControlPart>();
-            ControlPart part = buildPartFromElementText(elem, "statement");
+            // ArrayList<ControlPart> parts = new ArrayList<ControlPart>();
+            // ControlPart part = buildPartFromElementText(elem, "statement");
 
             // Security requirements (a,b,...) within overall security requirement
-            part.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
+            // part.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
 
-            parts.add(part);
+            // parts.add(part);
             
-            control.setParts(parts);
+            // control.setParts(parts);
 
-            control.addProp(buildLabelProp(elem.element_identifier));
+            // control.addProp(buildLabelProp(elem.element_identifier));
 
-            return control;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            // return control;
+            return buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier());
+        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
     }
 
     private List<ControlPart> buildSubcategoryImplementationExamples(Catalog catalog, String parentId) {
