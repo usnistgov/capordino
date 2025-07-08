@@ -578,11 +578,11 @@ public abstract class AbstractOscalConverter {
     }
 
     // Builds a Part for Assessment Methods
-    protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix) {
+    protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix, String namespace) {
         ControlPart part = new ControlPart();
         part.setName("assessment-method");
         part.setId(getEscapedIdentifier(element.element_identifier + "_" + part.getName() + "_" + element.element_type));
-        part.addProp(buildProp("method", element.element_type.toUpperCase(), "http://csrc.nist.gov/ns/rmf"));
+        part.addProp(buildProp("method", element.element_type.toUpperCase(), namespace));
 
         // Assessment Methods contain Assessment Objects
         ControlPart objects = new ControlPart();

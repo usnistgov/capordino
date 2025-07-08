@@ -357,7 +357,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
     // Assessment methods are EXAMINE, INTERVIEW, TEST
     private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
         ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            ControlPart examinePart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            ControlPart examinePart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
             examinePart.setId(elem.element_identifier.substring(2) + "_asm-examine");
             Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + EXAMINE_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
@@ -366,7 +366,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            ControlPart interviewPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            ControlPart interviewPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
             interviewPart.setId(elem.element_identifier.substring(2) + "_asm-interview");
             Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + INTERVIEW_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
@@ -375,7 +375,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
         ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            ControlPart testPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]");
+            ControlPart testPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
             testPart.setId(elem.element_identifier.substring(2) + "_asm-test");
             Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + TEST_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
