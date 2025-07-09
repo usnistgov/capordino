@@ -3,6 +3,7 @@ package gov.nist.capordino.cprt.conversion.sp_800_53;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.LinkedHashSet;
@@ -139,7 +140,9 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 return group;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            })
+            .sorted(Comparator.comparing(CatalogGroup::getId))
+            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
 
