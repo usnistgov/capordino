@@ -86,6 +86,13 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
     private final String SP_800_53_A_CLASS = "sp800-53a";
     private final String SP_800_53_ENHANCEMENT_CLASS = "SP800-53-enhancement";
 
+    private final String CST_PREFIX = "CST-";
+    private final String DS_PREFIX = "DS-";
+    private final String DISCUSSION_PREFIX = "D-";
+    private final String EXAMINE_PREFIX = "E-";
+    private final String INTERVIEW_PREFIX = "I-";
+    private final String TEST_PREFIX = "T-";
+
     /**
      * The URI to use for CSF-specific props.
      */
@@ -240,7 +247,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         try {
             return getRelatedElementsBySourceIdWithType(parentId, CONTROL_STATEMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 ControlPart part = buildPartFromElementText(elem, "item");
-                part.setId(elem.element_identifier.substring(4)); // Remove CST_ prefix
+                part.setId(removeCprtPrefix(elem.element_identifier, CST_PREFIX)); // Remove CST_ prefix
                 
                 // Recursively call to get all sub parts
                 part.setParts(buildControlStatementParts(catalog, elem.getGlobalIdentifier()));
@@ -309,7 +316,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
-            gdn_part.setId(getEscapedIdentifier(elem.element_identifier.substring(2) + "_gdn"));
+            gdn_part.setId(getEscapedIdentifier(removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
             return gdn_part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -319,8 +326,8 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         if(! elements.isEmpty()) {
             return elements.stream().map(elem -> {
                 ControlPart part = buildAssessmentObjectivePart(elem);
-                part.setId(removeSquareBrackets(elem.element_identifier.substring(3) + "_obj"));
-                Property prop = buildLabelProp(elem.element_identifier.substring(3));
+                part.setId(removeSquareBrackets(removeCprtPrefix(elem.element_identifier, DS_PREFIX) + "_obj"));
+                Property prop = buildLabelProp(removeCprtPrefix(elem.element_identifier, DS_PREFIX));
                 prop.setClazz(SP_800_53_A_CLASS);
                 part.addProp(prop);
 
@@ -329,7 +336,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 part.setLinks(new ArrayList<Link>());
                 List<CprtRelationship> assessment_for_relationships = cprtRoot.getRelationshipsByDestinationElementId(elem.getGlobalIdentifier());
                 for (CprtRelationship assessment_for_relationship : assessment_for_relationships) {
-                    part.addLink(createLink("#" + assessment_for_relationship.source_element_identifier.substring(4), "assessment-for"));
+                    part.addLink(createLink("#" + removeCprtPrefix(assessment_for_relationship.source_element_identifier, CST_PREFIX), "assessment-for"));
                 }
 
                 return part;
@@ -344,9 +351,9 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 // Recursively call to get all sub parts
                 // Build a tree of assessment objectives
                 ControlPart part = buildAssessmentObjectivePart(nextControlStatement);
-                part.setId(nextControlStatement.element_identifier.substring(4) + "_obj");
+                part.setId(removeCprtPrefix(nextControlStatement.element_identifier, CST_PREFIX) + "_obj");
                 part.setProse(null);
-                Property prop = buildLabelProp(nextControlStatement.element_identifier.substring(4));
+                Property prop = buildLabelProp(removeCprtPrefix(nextControlStatement.element_identifier, CST_PREFIX));
                 prop.setClazz(SP_800_53_A_CLASS);
                 part.addProp(prop);
                 part.setParts(createAssessmentObjectiveParts(catalog, nextControlStatement.getGlobalIdentifier()));
@@ -357,12 +364,30 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         }
     }
 
+    // Builds a Part for a Assessment Objective
+    protected ControlPart buildAssessmentObjectivePart(CprtElement element) {
+        ControlPart part = buildPartFromElementText(element, "assessment-objective");
+
+        // Parse any ODPs contained in this assessment objective
+        String objective_text = insertExplicitParams(element.text);
+        
+        part.setProse(createMarkupMultilineEscaped(objective_text));
+
+        // Add assessment-for link to the subcontrol item this objective assesses
+        List<CprtRelationship> assessment_for_relationships = cprtRoot.getRelationshipsByDestinationElementId(element.getGlobalIdentifier());
+        for (CprtRelationship assessment_for_relationship : assessment_for_relationships) {
+            part.addLink(createLink("#" + removeCprtPrefix(assessment_for_relationship.source_element_identifier, CST_PREFIX), "assessment-for"));
+        }
+
+        return part;
+    }
+
     // Assessment methods are EXAMINE, INTERVIEW, TEST
     private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
         ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart examinePart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
-            examinePart.setId(elem.element_identifier.substring(2) + "_asm-examine");
-            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + EXAMINE_ELEMENT_TYPE);
+            examinePart.setId(removeCprtPrefix(elem.element_identifier, EXAMINE_PREFIX) + "_asm-examine");
+            Property prop = buildLabelProp(removeCprtPrefix(elem.element_identifier, EXAMINE_PREFIX) + "-" + EXAMINE_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
             examinePart.addProp(prop);
             return examinePart;
@@ -370,8 +395,8 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
         ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart interviewPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
-            interviewPart.setId(elem.element_identifier.substring(2) + "_asm-interview");
-            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + INTERVIEW_ELEMENT_TYPE);
+            interviewPart.setId(removeCprtPrefix(elem.element_identifier, INTERVIEW_PREFIX) + "_asm-interview");
+            Property prop = buildLabelProp(removeCprtPrefix(elem.element_identifier, INTERVIEW_PREFIX) + "-" + INTERVIEW_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
             interviewPart.addProp(prop);
             return interviewPart;
@@ -379,8 +404,8 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
         ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart testPart = buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
-            testPart.setId(elem.element_identifier.substring(2) + "_asm-test");
-            Property prop = buildLabelProp(elem.element_identifier.substring(2) + "-" + TEST_ELEMENT_TYPE);
+            testPart.setId(removeCprtPrefix(elem.element_identifier, TEST_PREFIX) + "_asm-test");
+            Property prop = buildLabelProp(removeCprtPrefix(elem.element_identifier, TEST_PREFIX) + "-" + TEST_ELEMENT_TYPE);
             prop.setClazz(SP_800_53_A_CLASS);
             testPart.addProp(prop);
             return testPart;
@@ -390,5 +415,13 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         examine_parts.addAll(test_parts);
 
         return examine_parts;
+    }
+
+    private String removeCprtPrefix(String text, String prefix) {
+        if (text.contains(prefix)) {
+            return text.substring(prefix.length());
+        }
+
+        return text;
     }
 }
