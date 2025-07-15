@@ -46,6 +46,7 @@ public abstract class AbstractOscalConverter {
     protected final CprtMetadataVersion cprtMetadataVersion;
     protected final CprtRoot cprtRoot;
     protected final String CAPORDINO_CONTACT_EMAIL = "capordino@nist.gov";
+    protected final String OSCAL_CONTACT_EMAIL = "oscal@nist.gov";
 
     /**
      * The URI to use for CPRT-specific props.
@@ -148,7 +149,7 @@ public abstract class AbstractOscalConverter {
     private Party buildCreatorParty() {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
-        party.setName("National Institute of Standards and Technology");
+        party.setName("OSCAL Program");
         party.setShortName("NIST");
         party.setType("organization");
 
@@ -162,7 +163,7 @@ public abstract class AbstractOscalConverter {
         address.setPostalCode("20899-2000");
 
         party.addAddress(address);
-        party.addEmailAddress(CAPORDINO_CONTACT_EMAIL);
+        party.addEmailAddress(OSCAL_CONTACT_EMAIL);
         return party;
     }
 
