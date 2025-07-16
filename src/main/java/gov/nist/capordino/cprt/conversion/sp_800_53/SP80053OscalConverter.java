@@ -424,4 +424,56 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
         return text;
     }
+
+    private List<Parameter> createParams(CprtElement parent) {
+        // Get all assessment objectives associated with this control
+        // Then get all ODPs in the assessment objective
+        String parentId = parent.element_identifier;
+        List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            return get_odp_identifiers(elem.text, "<(.+?) .+?>");
+        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
+
+        // ODPs within ODPs
+        List<String> additional_odps = new ArrayList<String>();
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = parent.doc_identifier + ":" + odp_identifier;
+            
+            List<String> odps_within_odp = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            additional_odps.addAll(odps_within_odp);
+        }
+        odp_identifiers.addAll(additional_odps);
+
+        // LinkedHashSet to keep order and account for same ODPs in different objectives
+        Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
+
+        List<Parameter> odp_params = buildParams(parent.doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE);
+
+        
+        return odp_params;
+    }
+
+    // @Override
+    // protected String parseODPInElementText(CprtElement element) {
+    //     String text = element.text;
+
+    //     // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
+    //     List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+    //         return elem;
+    //     }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+    //     // For the assessment objective related to this control, get the related ODP(s)
+    //     for (CprtElement related_assessment_objective : related_assessment_objectives) {
+    //         List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+    //             return elem.element_identifier;
+    //         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+    //         // Replaced implicitly stated ODP with <insert odp_id>
+    //         text = insertImplicitParams(text, related_odps);
+    //     }
+        
+    //     return text;
+    // }
 }
