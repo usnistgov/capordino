@@ -3,7 +3,10 @@ package gov.nist.capordino.cprt.conversion.sp_800_172;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -13,6 +16,7 @@ import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
 import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource.Rlink;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
@@ -59,15 +63,45 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
 
+    private final String DISCUSSION_PREFIX = "D-";
+
+    private Map<String, Link> createdSourceControls = new HashMap<String, Link>();
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
-        catalog.setGroups(buildGroups(catalog));
+        catalog.setGroups(buildFamilyGroups(catalog));
     }
 
+    /**
+     * Build the top level group of the catalog, represented in CPRT as families.
+     */
+    private List<CatalogGroup> buildFamilyGroups(Catalog catalog) {
+        // Recursively go down tree of elements, to build family groups
+        return cprtRoot.getElements().stream()
+            .filter(elem -> elem.element_type.equals(FAMILY_ELEMENT_TYPE))
+            .map(elem -> {
+                // For each 800-172 family, create an OSCAL group
+                CatalogGroup group = new CatalogGroup();
+                group.setId("SP_800_172_" + elem.element_identifier);
+                group.setClazz(elem.element_type);
+                group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
+                // For 800-172 control, create an OSCAL control within this overall family group
+                group.setControls(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
 
-    
+                Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+                if (sortProp != null) {
+                    group.addProp(sortProp);
+                }
+
+                group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+
+                return group;
+            })
+            .sorted(Comparator.comparing(CatalogGroup::getId))
+            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
 
     private Property buildSortProp(String parentId) {
         List<CprtElement> sorts = getRelatedElementsBySourceIdWithType(parentId, SORT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -85,6 +119,92 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         sortProp.setName("sort-id");
         sortProp.setValue(sort.title);
         return sortProp;
+    }
+
+    private String removeCprtPrefix(String text, String prefix) {
+        if (text.contains(prefix)) {
+            return text.substring(prefix.length());
+        }
+
+        return text;
+    }
+
+    /**
+     * Build the second level group of the catalog, represented in CPRT as security requirements.
+     */
+    // For 800-172 requirement, create an OSCAL control
+    private List<Control> buildSecurityRequirementControls(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Control control = new Control();
+            control.setId("SP_800_172_" + elem.element_identifier);
+            control.setClazz(elem.element_type);
+            
+            control.addProp(buildProp("sort-id", elem.element_identifier));
+
+
+
+            control.addProp(buildLabelProp(elem.element_identifier));
+
+            List<ControlPart> parts = new ArrayList<ControlPart>();
+            ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            statementPart.setId(elem.element_identifier + "_smt"); 
+            parts.add(statementPart);
+
+            // CPRT discussion -> OSCAL guidance
+            parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
+
+
+            
+            control.setParts(parts);
+
+            List<Link> links = new ArrayList<Link>();
+            // Source Controls
+            links.addAll(createSourceControlsLinks(catalog, elem.getGlobalIdentifier()));
+
+            
+            control.setLinks(links);
+
+            // For 800-172 security requirement, create OSCAL control
+            
+            return control;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
+            gdn_part.setId(getEscapedIdentifier(removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
+            return gdn_part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    // Build RLinks to references to 800-53 controls, represented in CPRT site as Source Controls (no element type, external reference relationship type)
+    private List<Link> createSourceControlsLinks(Catalog catalog, String parentId) {
+        List<String> source_control_identifiers = getDestinationIdWithType(parentId, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<Link> source_controls_links = new ArrayList<Link>();
+
+        for (String source_control_identifier : source_control_identifiers) {
+            if (! createdSourceControls.containsKey(source_control_identifier)) {
+                Resource source_control_resource = new Resource();
+                source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
+                Rlink rlink = new Rlink();
+                rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
+                source_control_resource.addRlink(rlink);
+
+                Link link = newLinkRel(catalog, source_control_resource, REFERENCE_ITEM_ELEMENT_TYPE);
+                createdSourceControls.put(source_control_identifier, link);
+
+                source_controls_links.add(link);
+            }
+            else {
+                source_controls_links.add(createdSourceControls.get(source_control_identifier));
+            }
+        }
+
+        return source_controls_links;
     }
    
 }
