@@ -67,6 +67,11 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
     private Map<String, Link> createdSourceControls = new HashMap<String, Link>();
 
+    /**
+     * The URI to use for 800-172-specific props.
+     */
+    private final URI SP_800_172_URI = URI.create("https://csrc.nist.gov/ns/SP-800-172");
+
     @Override
     protected void hydrateCatalog(Catalog catalog) {
         catalog.setGroups(buildFamilyGroups(catalog));
@@ -140,10 +145,11 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             control.setClazz(elem.element_type);
             
             control.addProp(buildProp("sort-id", elem.element_identifier));
-
-
-
             control.addProp(buildLabelProp(elem.element_identifier));
+            List<Property> protectionStrategyProps = createProtectionStrategyProps(catalog, elem.getGlobalIdentifier());
+            for (Property p : protectionStrategyProps) {
+                control.addProp(p);
+            }
 
             List<ControlPart> parts = new ArrayList<ControlPart>();
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
@@ -152,7 +158,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
             // CPRT discussion -> OSCAL guidance
             parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
-
+            
 
             
             control.setParts(parts);
@@ -175,6 +181,13 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
             gdn_part.setId(getEscapedIdentifier(removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
             return gdn_part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<Property> createProtectionStrategyProps(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, PROTECTION_STRATEGY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Property ps_prop = buildProp(PROTECTION_STRATEGY_ELEMENT_TYPE, elem.title, SP_800_172_URI.toString());
+            return ps_prop;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
