@@ -193,16 +193,14 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         List<ControlPart> adversaryEffectParts = new ArrayList<ControlPart>();
         if (adversaryEffectElements.size() > 1) {
             CprtElement SP_800_160_adversary_element = adversaryEffectElements.get(0);
-            List<CprtElement> SP_800_160_element_list = getRelatedElementsBySourceIdWithType(SP_800_160_adversary_element.getGlobalIdentifier(), REFERENCE_ITEM_ELEMENT_TYPE).map(elem -> {
-                return elem;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            List<CprtElement> SP_800_160_element_list = getAdversaryEffectElements(SP_800_160_adversary_element, REFERENCE_ITEM_ELEMENT_TYPE);
 
             CprtElement SP_800_160_element = SP_800_160_element_list.get(0);
 
             ControlPart topLevelAEPart = new ControlPart();
             topLevelAEPart.setName(ADVERSARY_EFFECT_ELEMENT_TYPE);
             topLevelAEPart.setNs(SP_800_172_URI);
-            topLevelAEPart.setId(getEscapedIdentifier(removeCprtPrefix(SP_800_160_adversary_element.element_identifier, "-1")));
+            topLevelAEPart.setId(SP_800_160_adversary_element.element_identifier);
             
             
             if (! createdReferences.containsKey(SP_800_160_element.element_identifier)) {
@@ -215,41 +213,56 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 Link link = createdReferences.get(SP_800_160_element.element_identifier);
                 topLevelAEPart.addLink(link);
             }
-            
+            adversaryEffectParts.add(topLevelAEPart);
             
             for (int i = 1; i < adversaryEffectElements.size(); i++) {
                 // effect
                
                 CprtElement adversaryElement = adversaryEffectElements.get(i);
-                List<CprtElement> effectElementList = getRelatedElementsBySourceIdWithType(adversaryElement.getGlobalIdentifier(), EFFECT_ELEMENT_TYPE).map(elem -> {
-                    return elem;
-                }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+                List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
 
                 for (CprtElement effectElement : effectElementList) {
-                    Property effectProp = buildProp(EFFECT_ELEMENT_TYPE, effectElement.element_identifier, SP_800_172_URI.toString());
-                    effectProp.setRemarks(createMarkupMultilineEscaped(effectElement.title + "\n\n" + effectElement.text));
+                    ControlPart effectPart = buildAdversaryEffectPart(effectElement, adversaryElement);
 
-                    // impact, expected results (examples)
+                    // impact
+                    List<CprtElement> impactElementList = getAdversaryEffectElements(effectElement, IMPACT_ELEMENT_TYPE);
+                    for (CprtElement impactElement : impactElementList) {
+                        ControlPart impactPart = buildAdversaryEffectPart(impactElement, adversaryElement);
+                        effectPart.addPart(impactPart);
+                    }
 
-                    
+                    //expected results (examples)
 
-                    topLevelAEPart.addProp(effectProp);
+                    adversaryEffectParts.add(effectPart);
                 }
 
-                
+
                 // tactic
-                List<CprtElement> tacticElementList = getRelatedElementsBySourceIdWithType(adversaryElement.getGlobalIdentifier(), TACTIC_ELEMENT_TYPE).map(elem -> {
-                    return elem;
-                }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-                
+                // List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
+                // for (int j = 0; j < tacticElementList.size(); j++) {
+                //     CprtElement tacticElement = tacticElementList.get(j);
+                //     ControlPart tacticPart = buildAdversaryEffectPart(tacticElement, adversaryElement);
+                //     tacticPart.setId(tacticPart.getId() + "-" + j);
+                //     adversaryEffectParts.add(tacticPart);
+                // }
             }
-
-
-
-            adversaryEffectParts.add(topLevelAEPart);
         }
 
         return adversaryEffectParts;
+    }
+
+    private ControlPart buildAdversaryEffectPart(CprtElement elem, CprtElement adversaryElement) {
+        ControlPart part = buildPartFromElementText(elem, elem.element_identifier, SP_800_172_URI);
+        part.setClazz(elem.element_type);
+        part.setProse(createMarkupMultilineEscaped(elem.title + "\n\n" + elem.text));
+        part.setId(adversaryElement.element_identifier + "-" + elem.element_type);
+        return part;
+    }
+
+    private List<CprtElement> getAdversaryEffectElements(CprtElement adversaryElement, String elemType) {
+        return getRelatedElementsBySourceIdWithType(adversaryElement.getGlobalIdentifier(), elemType).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<Property> createProtectionStrategyProps(Catalog catalog, String parentId) {
