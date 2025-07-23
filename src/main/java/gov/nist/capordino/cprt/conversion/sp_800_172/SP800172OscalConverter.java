@@ -216,8 +216,33 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 topLevelAEPart.addLink(link);
             }
             
-
             
+            for (int i = 1; i < adversaryEffectElements.size(); i++) {
+                // effect
+               
+                CprtElement adversaryElement = adversaryEffectElements.get(i);
+                List<CprtElement> effectElementList = getRelatedElementsBySourceIdWithType(adversaryElement.getGlobalIdentifier(), EFFECT_ELEMENT_TYPE).map(elem -> {
+                    return elem;
+                }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+                for (CprtElement effectElement : effectElementList) {
+                    Property effectProp = buildProp(EFFECT_ELEMENT_TYPE, effectElement.element_identifier, SP_800_172_URI.toString());
+                    effectProp.setRemarks(createMarkupMultilineEscaped(effectElement.title + "\n\n" + effectElement.text));
+
+                    // impact, expected results (examples)
+
+                    
+
+                    topLevelAEPart.addProp(effectProp);
+                }
+
+                
+                // tactic
+                List<CprtElement> tacticElementList = getRelatedElementsBySourceIdWithType(adversaryElement.getGlobalIdentifier(), TACTIC_ELEMENT_TYPE).map(elem -> {
+                    return elem;
+                }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+                
+            }
 
 
 
