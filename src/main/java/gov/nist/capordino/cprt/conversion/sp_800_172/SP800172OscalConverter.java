@@ -65,7 +65,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
     private final String DISCUSSION_PREFIX = "D-";
 
-    private Map<String, Link> createdSourceControls = new HashMap<String, Link>();
+    private Map<String, Link> createdReferences = new HashMap<String, Link>();
 
     /**
      * The URI to use for 800-172-specific props.
@@ -127,8 +127,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     }
 
     private String removeCprtPrefix(String text, String prefix) {
-        if (text.contains(prefix)) {
-            return text.substring(prefix.length());
+        int index = text.indexOf(prefix);
+        if (index > -1) {
+            return text.substring(0, index) + text.substring(index + prefix.length());
         }
 
         return text;
@@ -158,7 +159,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
             // CPRT discussion -> OSCAL guidance
             parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
-            
+            parts.addAll(createAdversaryEffectParts(catalog, elem.getGlobalIdentifier()));
 
             
             control.setParts(parts);
@@ -184,6 +185,48 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
+    private List<ControlPart> createAdversaryEffectParts(Catalog catalog, String parentId) {
+        List<CprtElement> adversaryEffectElements = getRelatedElementsBySourceIdWithType(parentId, ADVERSARY_EFFECT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<ControlPart> adversaryEffectParts = new ArrayList<ControlPart>();
+        if (adversaryEffectElements.size() > 1) {
+            CprtElement SP_800_160_adversary_element = adversaryEffectElements.get(0);
+            List<CprtElement> SP_800_160_element_list = getRelatedElementsBySourceIdWithType(SP_800_160_adversary_element.getGlobalIdentifier(), REFERENCE_ITEM_ELEMENT_TYPE).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            CprtElement SP_800_160_element = SP_800_160_element_list.get(0);
+
+            ControlPart topLevelAEPart = new ControlPart();
+            topLevelAEPart.setName(ADVERSARY_EFFECT_ELEMENT_TYPE);
+            topLevelAEPart.setNs(SP_800_172_URI);
+            topLevelAEPart.setId(getEscapedIdentifier(removeCprtPrefix(SP_800_160_adversary_element.element_identifier, "-1")));
+            
+            
+            if (! createdReferences.containsKey(SP_800_160_element.element_identifier)) {
+                Resource SP_800_160_Resource = buildResource(SP_800_160_element);
+                Link link = newLinkRel(catalog, SP_800_160_Resource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+                createdReferences.put(SP_800_160_element.element_identifier, link);
+                topLevelAEPart.addLink(link);
+            }
+            else {
+                Link link = createdReferences.get(SP_800_160_element.element_identifier);
+                topLevelAEPart.addLink(link);
+            }
+            
+
+            
+
+
+
+            adversaryEffectParts.add(topLevelAEPart);
+        }
+
+        return adversaryEffectParts;
+    }
+
     private List<Property> createProtectionStrategyProps(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, PROTECTION_STRATEGY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Property ps_prop = buildProp(PROTECTION_STRATEGY_ELEMENT_TYPE, elem.title, SP_800_172_URI.toString());
@@ -200,20 +243,20 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         List<Link> source_controls_links = new ArrayList<Link>();
 
         for (String source_control_identifier : source_control_identifiers) {
-            if (! createdSourceControls.containsKey(source_control_identifier)) {
+            if (! createdReferences.containsKey(source_control_identifier)) {
                 Resource source_control_resource = new Resource();
                 source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
                 Rlink rlink = new Rlink();
                 rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
                 source_control_resource.addRlink(rlink);
 
-                Link link = newLinkRel(catalog, source_control_resource, REFERENCE_ITEM_ELEMENT_TYPE);
-                createdSourceControls.put(source_control_identifier, link);
+                Link link = newLinkRel(catalog, source_control_resource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+                createdReferences.put(source_control_identifier, link);
 
                 source_controls_links.add(link);
             }
             else {
-                source_controls_links.add(createdSourceControls.get(source_control_identifier));
+                source_controls_links.add(createdReferences.get(source_control_identifier));
             }
         }
 
