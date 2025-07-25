@@ -181,6 +181,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
             gdn_part.setId(getEscapedIdentifier(removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
+            gdn_part.setClazz(elem.element_type);
+            gdn_part.setNs(SP_800_172_URI);
             return gdn_part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -215,10 +217,10 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             }
             adversaryEffectParts.add(topLevelAEPart);
             
-            for (int i = 1; i < adversaryEffectElements.size(); i++) {
+            for (int adversary_index = 1; adversary_index < adversaryEffectElements.size(); adversary_index++) {
                 // effect
                
-                CprtElement adversaryElement = adversaryEffectElements.get(i);
+                CprtElement adversaryElement = adversaryEffectElements.get(adversary_index);
                 List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
 
                 for (CprtElement effectElement : effectElementList) {
@@ -231,13 +233,20 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                         effectPart.addPart(impactPart);
                     }
 
-                    //expected results (examples)
+                    //expected results
+                    List<CprtElement> expectedResultElementList = getAdversaryEffectElements(effectElement, EXPECTED_RESULT_ELEMENT_TYPE);
+                    for (int expectedResultIndex = 1; expectedResultIndex <= expectedResultElementList.size(); expectedResultIndex++) {
+                        CprtElement expectedResultElement = expectedResultElementList.get(expectedResultIndex-1);
+                        ControlPart expectedResultPart = buildAdversaryEffectPart(expectedResultElement, adversaryElement);
+                        expectedResultPart.setId(expectedResultPart.getId() + "-" + expectedResultIndex);
+                        effectPart.addPart(expectedResultPart);
+                    }
 
                     adversaryEffectParts.add(effectPart);
                 }
 
 
-                // tactic
+                // tactic (examples)
                 // List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
                 // for (int j = 0; j < tacticElementList.size(); j++) {
                 //     CprtElement tacticElement = tacticElementList.get(j);
@@ -267,7 +276,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
     private List<Property> createProtectionStrategyProps(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, PROTECTION_STRATEGY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            Property ps_prop = buildProp(PROTECTION_STRATEGY_ELEMENT_TYPE, elem.title, SP_800_172_URI.toString());
+            Property ps_prop = buildProp(PROTECTION_STRATEGY_ELEMENT_TYPE, elem.element_identifier, SP_800_172_URI.toString());
+            ps_prop.setRemarks(createMarkupMultilineEscaped(elem.title));
             return ps_prop;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
