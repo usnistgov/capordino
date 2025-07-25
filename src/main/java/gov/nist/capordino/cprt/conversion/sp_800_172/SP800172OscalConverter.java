@@ -144,6 +144,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             Control control = new Control();
             control.setId("SP_800_172_" + elem.element_identifier);
             control.setClazz(elem.element_type);
+            control.setTitle(createMarkupLineEscaped(elem.element_identifier));
             
             control.addProp(buildProp("sort-id", elem.element_identifier));
             control.addProp(buildLabelProp(elem.element_identifier));
@@ -154,7 +155,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
             List<ControlPart> parts = new ArrayList<ControlPart>();
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            statementPart.setId(elem.element_identifier + "_smt"); 
+            statementPart.setId("SP_800_172_" + elem.element_identifier + "_smt"); 
             parts.add(statementPart);
 
             // CPRT discussion -> OSCAL guidance
@@ -180,7 +181,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
-            gdn_part.setId(getEscapedIdentifier(removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
+            gdn_part.setId(getEscapedIdentifier("SP_800_172_" + removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
             gdn_part.setClazz(elem.element_type);
             gdn_part.setNs(SP_800_172_URI);
             return gdn_part;
