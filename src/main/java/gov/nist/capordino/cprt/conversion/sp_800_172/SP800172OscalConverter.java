@@ -159,7 +159,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
             // CPRT discussion -> OSCAL guidance
             parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
-            parts.addAll(createAdversaryEffectParts(catalog, elem.getGlobalIdentifier()));
+            parts.addAll(createAdversaryEffectParts(catalog, elem.getGlobalIdentifier(), ADVERSARY_EFFECT_ELEMENT_TYPE));
 
             
             control.setParts(parts);
@@ -187,8 +187,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
-    private List<ControlPart> createAdversaryEffectParts(Catalog catalog, String parentId) {
-        List<CprtElement> adversaryEffectElements = getRelatedElementsBySourceIdWithType(parentId, ADVERSARY_EFFECT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+    private List<ControlPart> createAdversaryEffectParts(Catalog catalog, String parentId, String elemType) {
+        List<CprtElement> adversaryEffectElements = getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             return elem;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
@@ -200,10 +200,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             CprtElement SP_800_160_element = SP_800_160_element_list.get(0);
 
             ControlPart topLevelAEPart = new ControlPart();
-            topLevelAEPart.setName(ADVERSARY_EFFECT_ELEMENT_TYPE);
+            topLevelAEPart.setName(elemType);
             topLevelAEPart.setNs(SP_800_172_URI);
             topLevelAEPart.setId(SP_800_160_adversary_element.element_identifier);
-            
             
             if (! createdReferences.containsKey(SP_800_160_element.element_identifier)) {
                 Resource SP_800_160_Resource = buildResource(SP_800_160_element);
@@ -218,53 +217,60 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             adversaryEffectParts.add(topLevelAEPart);
             
             for (int adversary_index = 1; adversary_index < adversaryEffectElements.size(); adversary_index++) {
-                // effect
-               
                 CprtElement adversaryElement = adversaryEffectElements.get(adversary_index);
+
                 List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
+                ControlPart effectPart = parseAdversaryEffectElement(effectElementList, adversaryElement.element_identifier);
+                adversaryEffectParts.add(effectPart);
 
-                for (CprtElement effectElement : effectElementList) {
-                    ControlPart effectPart = buildAdversaryEffectPart(effectElement, adversaryElement);
-
-                    // impact
-                    List<CprtElement> impactElementList = getAdversaryEffectElements(effectElement, IMPACT_ELEMENT_TYPE);
-                    for (CprtElement impactElement : impactElementList) {
-                        ControlPart impactPart = buildAdversaryEffectPart(impactElement, adversaryElement);
-                        effectPart.addPart(impactPart);
-                    }
-
-                    //expected results
-                    List<CprtElement> expectedResultElementList = getAdversaryEffectElements(effectElement, EXPECTED_RESULT_ELEMENT_TYPE);
-                    for (int expectedResultIndex = 1; expectedResultIndex <= expectedResultElementList.size(); expectedResultIndex++) {
-                        CprtElement expectedResultElement = expectedResultElementList.get(expectedResultIndex-1);
-                        ControlPart expectedResultPart = buildAdversaryEffectPart(expectedResultElement, adversaryElement);
-                        expectedResultPart.setId(expectedResultPart.getId() + "-" + expectedResultIndex);
-                        effectPart.addPart(expectedResultPart);
-                    }
-
-                    adversaryEffectParts.add(effectPart);
-                }
-
-
-                // tactic (examples)
-                // List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
-                // for (int j = 0; j < tacticElementList.size(); j++) {
-                //     CprtElement tacticElement = tacticElementList.get(j);
-                //     ControlPart tacticPart = buildAdversaryEffectPart(tacticElement, adversaryElement);
-                //     tacticPart.setId(tacticPart.getId() + "-" + j);
-                //     adversaryEffectParts.add(tacticPart);
-                // }
+                List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
+                ControlPart tacticPart = parseAdversaryEffectElement(tacticElementList, adversaryElement.element_identifier);
+                adversaryEffectParts.add(tacticPart);
             }
         }
 
         return adversaryEffectParts;
     }
 
-    private ControlPart buildAdversaryEffectPart(CprtElement elem, CprtElement adversaryElement) {
+    private ControlPart parseAdversaryEffectElement(List<CprtElement> effectElementList, String adversaryElementId) {
+        ControlPart effectPart = new ControlPart();
+        for (CprtElement effectElement : effectElementList) {
+            effectPart = buildAdversaryEffectPart(effectElement, adversaryElementId);
+
+            // impact
+            List<CprtElement> impactElementList = getAdversaryEffectElements(effectElement, IMPACT_ELEMENT_TYPE);
+            for (CprtElement impactElement : impactElementList) {
+                ControlPart impactPart = buildAdversaryEffectPart(impactElement, effectPart.getId());
+                effectPart.addPart(impactPart);
+            }
+
+            //expected results
+            List<CprtElement> expectedResultElementList = getAdversaryEffectElements(effectElement, EXPECTED_RESULT_ELEMENT_TYPE);
+            for (int expectedResultIndex = 1; expectedResultIndex <= expectedResultElementList.size(); expectedResultIndex++) {
+                CprtElement expectedResultElement = expectedResultElementList.get(expectedResultIndex-1);
+                ControlPart expectedResultPart = buildAdversaryEffectPart(expectedResultElement, effectPart.getId());
+                expectedResultPart.setId(expectedResultPart.getId() + "-" + expectedResultIndex);
+                effectPart.addPart(expectedResultPart);
+            }
+
+            //examples
+            List<CprtElement> exampleElementList = getAdversaryEffectElements(effectElement, EXAMPLE_ELEMENT_TYPE);
+            for (int exampleIndex = 1; exampleIndex <= exampleElementList.size(); exampleIndex++) {
+                CprtElement exampleElement = exampleElementList.get(exampleIndex-1);
+                ControlPart examplePart = buildAdversaryEffectPart(exampleElement, effectPart.getId());
+                examplePart.setId(examplePart.getId() + "-" + exampleIndex);
+                effectPart.addPart(examplePart);
+            }
+        }
+
+        return effectPart;
+    }
+
+    private ControlPart buildAdversaryEffectPart(CprtElement elem, String idPrefix) {
         ControlPart part = buildPartFromElementText(elem, elem.element_identifier, SP_800_172_URI);
         part.setClazz(elem.element_type);
         part.setProse(createMarkupMultilineEscaped(elem.title + "\n\n" + elem.text));
-        part.setId(adversaryElement.element_identifier + "-" + elem.element_type);
+        part.setId(idPrefix + "-" + elem.element_type);
         return part;
     }
 
