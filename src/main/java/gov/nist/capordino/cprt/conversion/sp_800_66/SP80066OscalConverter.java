@@ -58,7 +58,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
 
-    // private Map<String, Link> createdReferences = new HashMap<String, Link>();
+    private Map<String, Link> createdPubCrosswalks = new HashMap<String, Link>();
 
     /**
      * The URI to use for 800-66-specific props.
@@ -102,13 +102,13 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
             .map(elem -> {
                 // For each 800-66 security rule, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
-                group.setId("SP_800_66_" + elem.element_identifier);
+                group.setId("SP_800_66-" + elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
                 group.addPart(buildPartFromElementText(elem, "overview"));
                 // For 800-66 standard, create an OSCAL control within this overall security rule group
-                group.setControls(buildStandardControls(catalog, elem.getGlobalIdentifier()));
+                group.setGroups(buildStandardGroups(catalog, elem.getGlobalIdentifier()));
                 
 
 
@@ -122,27 +122,95 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
 
     /**
-     * Build the second level control of the catalog, represented in CPRT as standards.
+     * Build the second level group of the catalog, represented in CPRT as standards.
      */
-    // For 800-66 standard, create an OSCAL control
-    private List<Control> buildStandardControls(Catalog catalog, String parentId) {
+    // For 800-66 standard, create an OSCAL group
+    private List<CatalogGroup> buildStandardGroups(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, STANDARD_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            CatalogGroup standardGroup = new CatalogGroup();
+            standardGroup.setId("SP_800_66-" + elem.element_identifier);
+            standardGroup.setClazz(elem.element_type);
+            standardGroup.setTitle(createMarkupLineEscaped(elem.title));
+
+            standardGroup.addPart(buildPartFromElementText(elem, "instruction"));            
+
+            // Key activity
+            standardGroup.setControls(buildKeyActivityControls(catalog, elem.getGlobalIdentifier()));
+
+            // Pub crosswalk
+            List<Link> links = new ArrayList<Link>();
+            links.addAll(createPubCrosswalkLinks(catalog, elem.getGlobalIdentifier()));
+            standardGroup.setLinks(links);
+
+            standardGroup.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
+            
+            return standardGroup;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    /**
+     * Build the third level control of the catalog, represented in CPRT as key activities.
+     */
+    private List<Control> buildKeyActivityControls(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, KEY_ACTIVITY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId("SP_800_66_" + elem.element_identifier);
+            control.setId(elem.element_identifier);
             control.setClazz(elem.element_type);
             control.setTitle(createMarkupLineEscaped(elem.title));
 
+            
             List<ControlPart> parts = new ArrayList<ControlPart>();
-            ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            // Key activity
-            // Pub crosswalk
 
+            // Description within a key activity
+            ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            statementPart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), DESCRIPTION_ELEMENT_TYPE));
             parts.add(statementPart);
 
-            control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
-            
+            // Sample questions within a key activity
+            ControlPart guidancePart = buildPartFromElementText(elem, "guidance");
+            guidancePart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), SAMPLE_QUESTION_ELEMENT_TYPE));
+            parts.add(guidancePart);
+
+            control.setParts(parts);
+
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> buildKeyActivityParts(Catalog catalog, String parentId, String elemType) {
+        try {
+            return getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                ControlPart part = buildPartFromElementText(elem, elemType);
+                part.setId(elem.element_identifier);
+                // part.setClazz(elem.element_type);
+                part.setNs(SP_800_66_URI);
+                part.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), elemType));
+
+                return part;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (IllegalArgumentException e) {
+            return new ArrayList<ControlPart>();
+        }
+    }
+
+
+
+    // Build RLinks to references, represented in CPRT site as publication crosswalks (pub_crosswalk element type, projection relationship type)
+    private List<Link> createPubCrosswalkLinks(Catalog catalog, String parentId) {
+         return getRelatedElementsBySourceIdWithType(parentId, PUB_CROSSWALK_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE)
+            .map(elem -> {
+                if (! createdPubCrosswalks.containsKey(elem.title)) {
+                    Resource pubCrosswalkResource = buildResource(elem);
+                    pubCrosswalkResource.setTitle(MarkupLine.fromMarkdown(elem.title));
+                    Link link = newLinkRel(catalog, pubCrosswalkResource, PUB_CROSSWALK_ELEMENT_TYPE);
+                    createdPubCrosswalks.put(elem.title, link);
+                    return link;
+                }
+                else {
+                    return createdPubCrosswalks.get(elem.title);
+                }
+            // if exists, link to already existing reference, have a hashmap of identifier and resource object
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
     
 }
