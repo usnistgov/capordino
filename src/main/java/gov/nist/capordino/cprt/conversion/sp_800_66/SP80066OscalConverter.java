@@ -171,6 +171,8 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
             guidancePart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), SAMPLE_QUESTION_ELEMENT_TYPE));
             parts.add(guidancePart);
 
+            parts.addAll(buildImpSpecParts(catalog, elem.getGlobalIdentifier()));
+
             control.setParts(parts);
 
             return control;
@@ -193,6 +195,27 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
         }
     }
 
+    private List<ControlPart> buildImpSpecParts(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, IMP_SPEC_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart part = buildPartFromElementText(elem, IMP_SPEC_ELEMENT_TYPE);
+            part.setId("SP_800_66-" + elem.element_identifier);
+            // part.setClazz(elem.element_type);
+            part.setNs(SP_800_66_URI);
+            part.setTitle(createMarkupLineEscaped(elem.title));
+
+            List<Property> impSpecProps = buildImpSpecTypes(catalog, elem.getGlobalIdentifier());
+            part.setProps(impSpecProps);
+
+            return part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<Property> buildImpSpecTypes(Catalog catalog, String parentId) {
+         return getRelatedElementsBySourceIdWithType(parentId, TYPE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Property impSpecType = buildProp(TYPE_ELEMENT_TYPE, elem.title, SP_800_66_URI.toString());
+            return impSpecType;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
 
 
     // Build RLinks to references, represented in CPRT site as publication crosswalks (pub_crosswalk element type, projection relationship type)
