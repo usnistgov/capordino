@@ -132,7 +132,10 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
             standardGroup.setClazz(elem.element_type);
             standardGroup.setTitle(createMarkupLineEscaped(elem.title));
 
-            standardGroup.addPart(buildPartFromElementText(elem, "instruction"));            
+            List<ControlPart> standardGroupParts = new ArrayList<ControlPart>();
+            standardGroupParts.add(buildPartFromElementText(elem, "instruction"));
+            standardGroupParts.addAll(buildFootnotePart(catalog, elem.getGlobalIdentifier()));
+            standardGroup.setParts(standardGroupParts);
 
             // Key activity
             standardGroup.setControls(buildKeyActivityControls(catalog, elem.getGlobalIdentifier()));
@@ -173,6 +176,8 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
             parts.addAll(buildImpSpecParts(catalog, elem.getGlobalIdentifier()));
 
+            parts.addAll(buildFootnotePart(catalog, elem.getGlobalIdentifier()));
+
             control.setParts(parts);
 
             return control;
@@ -186,7 +191,11 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
                 part.setId(elem.element_identifier);
                 // part.setClazz(elem.element_type);
                 part.setNs(SP_800_66_URI);
-                part.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), elemType));
+
+                List<ControlPart> subParts = new ArrayList<ControlPart>();
+                subParts.addAll(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), elemType));
+                subParts.addAll(buildFootnotePart(catalog, elem.getGlobalIdentifier()));
+                part.setParts(subParts);
 
                 return part;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -234,6 +243,16 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
                 }
             // if exists, link to already existing reference, have a hashmap of identifier and resource object
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> buildFootnotePart(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, FOOTNOTE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart footnotePart = buildPartFromElementText(elem, FOOTNOTE_ELEMENT_TYPE);
+            footnotePart.setId("SP_800_66-" + elem.element_identifier);
+            // footnotePart.setClazz(elem.element_type);
+            footnotePart.setNs(SP_800_66_URI);
+            return footnotePart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
     
 }
