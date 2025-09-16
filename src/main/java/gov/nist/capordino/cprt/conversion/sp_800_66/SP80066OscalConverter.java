@@ -166,7 +166,21 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
             // Description within a key activity
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            statementPart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), DESCRIPTION_ELEMENT_TYPE));
+            List<ControlPart> descriptionParts = buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), DESCRIPTION_ELEMENT_TYPE);
+            List<ControlPart> impSpecParts = buildImpSpecParts(catalog, elem.getGlobalIdentifier());
+            if (impSpecParts.size() > 0) {
+                try {
+                    ControlPart firstDescriptionPart = descriptionParts.get(0);
+                    ControlPart impSpec = impSpecParts.get(0);
+                    Property impSpecProperty = impSpec.getProps().get(0);
+
+                    firstDescriptionPart.addProp(newCprtProp(IMP_SPEC_ELEMENT_TYPE, impSpecProperty.getValue()));
+                    descriptionParts.set(0, firstDescriptionPart);
+                } catch (IndexOutOfBoundsException e) {
+                    descriptionParts.addAll(0, impSpecParts);
+                }
+            }
+            statementPart.setParts(descriptionParts);
             parts.add(statementPart);
 
             // Sample questions within a key activity
@@ -174,7 +188,6 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
             guidancePart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), SAMPLE_QUESTION_ELEMENT_TYPE));
             parts.add(guidancePart);
 
-            parts.addAll(buildImpSpecParts(catalog, elem.getGlobalIdentifier()));
 
             parts.addAll(buildFootnotePart(catalog, elem.getGlobalIdentifier()));
 
