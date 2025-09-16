@@ -173,8 +173,9 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
                     ControlPart firstDescriptionPart = descriptionParts.get(0);
                     ControlPart impSpec = impSpecParts.get(0);
                     Property impSpecProperty = impSpec.getProps().get(0);
-
-                    firstDescriptionPart.addProp(newCprtProp(IMP_SPEC_ELEMENT_TYPE, impSpecProperty.getValue()));
+                    Property impSpecToAdd = newCprtProp(IMP_SPEC_ELEMENT_TYPE, impSpecProperty.getValue());
+                    impSpecToAdd.setNs(SP_800_66_URI);
+                    firstDescriptionPart.addProp(impSpecToAdd);
                     descriptionParts.set(0, firstDescriptionPart);
                 } catch (IndexOutOfBoundsException e) {
                     descriptionParts.addAll(0, impSpecParts);
