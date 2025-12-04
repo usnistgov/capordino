@@ -36,7 +36,7 @@ public class SP80066OscalConverterTest {
     /**
      * A CPRT file that contains a subset of 800-66 content.
      */
-    final static File Cprt80066Sample = new File("src/test/resources/cprt_SP800_66_2_0_0_08-28-2025.json");
+    final static File Cprt80066Sample = new File("src/test/resources/cprt_SP800_66_2_0_0_09-15-2025.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;
@@ -87,27 +87,27 @@ public class SP80066OscalConverterTest {
         assertTrue(results.isPassing());
     }
 
-    // @Test
-    // @Order(3)
-    // @Tag("Online")
-    // void testConvertSP80066ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
-    //     CprtApiClient client = new CprtApiClient();
-    //     CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_172_1_0_0")).findFirst().orElseThrow();
+    @Test
+    @Order(3)
+    @Tag("Online")
+    void testConvertSP80066ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+        CprtApiClient client = new CprtApiClient();
+        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP800_66_2_0_0")).findFirst().orElseThrow();
 
-    //     SP80066OscalConverter converter = new SP80066OscalConverter(version);
-    //     Catalog catalog = converter.buildCatalog();
+        SP80066OscalConverter converter = new SP80066OscalConverter(version);
+        Catalog catalog = converter.buildCatalog();
 
-    //     // Write to a file and load again to ensure the serialization and deserialization works
-    //     ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-    //     serializer.serialize(catalog, Cprt80066OutFilePath);
-    //     assertNotNull(bindingContext.loadCatalog(Cprt80066OutFilePath));
-    // }
+        // Write to a file and load again to ensure the serialization and deserialization works
+        ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
+        serializer.serialize(catalog, Cprt80066OutFilePath);
+        assertNotNull(bindingContext.loadCatalog(Cprt80066OutFilePath));
+    }
 
-    // @Test
-    // @Order(4)
-    // @Tag("Online")
-    // void testValidateSP80066ToOscal() throws IOException {
-    //     IValidationResult results = bindingContext.validateWithConstraints(Cprt80066OutFilePath);
-    //     assertTrue(results.isPassing());
-    // }
+    @Test
+    @Order(4)
+    @Tag("Online")
+    void testValidateSP80066ToOscal() throws IOException {
+        IValidationResult results = bindingContext.validateWithConstraints(Cprt80066OutFilePath);
+        assertTrue(results.isPassing());
+    }
 }
