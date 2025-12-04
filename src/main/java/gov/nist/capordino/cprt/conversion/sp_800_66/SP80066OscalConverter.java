@@ -102,7 +102,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
             .map(elem -> {
                 // For each 800-66 security rule, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
-                group.setId("SP_800_66-" + elem.element_identifier);
+                group.setId(replaceParentheses("SP_800_66-" + elem.element_identifier, ".", ""));
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
@@ -128,12 +128,14 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
     private List<CatalogGroup> buildStandardGroups(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, STANDARD_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             CatalogGroup standardGroup = new CatalogGroup();
-            standardGroup.setId("SP_800_66-" + elem.element_identifier);
+            standardGroup.setId(replaceParentheses("SP_800_66-" + elem.element_identifier, ".", ""));
             standardGroup.setClazz(elem.element_type);
             standardGroup.setTitle(createMarkupLineEscaped(elem.title));
 
             List<ControlPart> standardGroupParts = new ArrayList<ControlPart>();
-            standardGroupParts.add(buildPartFromElementText(elem, "instruction"));
+            ControlPart instructionPart = buildPartFromElementText(elem, "instruction");
+            instructionPart.setId(replaceParentheses(instructionPart.getId(), ".", ""));
+            standardGroupParts.add(instructionPart);
             standardGroupParts.addAll(buildFootnotePart(catalog, elem.getGlobalIdentifier()));
             standardGroup.setParts(standardGroupParts);
 
@@ -157,7 +159,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
     private List<Control> buildKeyActivityControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, KEY_ACTIVITY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId(elem.element_identifier);
+            control.setId(replaceParentheses(elem.element_identifier, ".", ""));
             control.setClazz(elem.element_type);
             control.setTitle(createMarkupLineEscaped(elem.title));
 
@@ -166,6 +168,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
             // Description within a key activity
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            statementPart.setId(replaceParentheses(statementPart.getId(), ".", ""));
             List<ControlPart> descriptionParts = buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), DESCRIPTION_ELEMENT_TYPE);
             List<ControlPart> impSpecParts = buildImpSpecParts(catalog, elem.getGlobalIdentifier());
             if (impSpecParts.size() > 0) {
@@ -186,6 +189,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
 
             // Sample questions within a key activity
             ControlPart guidancePart = buildPartFromElementText(elem, "guidance");
+            guidancePart.setId(replaceParentheses(guidancePart.getId(), ".", ""));
             guidancePart.setParts(buildKeyActivityParts(catalog, elem.getGlobalIdentifier(), SAMPLE_QUESTION_ELEMENT_TYPE));
             parts.add(guidancePart);
 
@@ -202,7 +206,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
         try {
             return getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 ControlPart part = buildPartFromElementText(elem, elemType);
-                part.setId(elem.element_identifier);
+                part.setId(replaceParentheses(elem.element_identifier, ".", ""));
                 // part.setClazz(elem.element_type);
                 part.setNs(SP_800_66_URI);
 
@@ -221,7 +225,7 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> buildImpSpecParts(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, IMP_SPEC_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart part = buildPartFromElementText(elem, IMP_SPEC_ELEMENT_TYPE);
-            part.setId("SP_800_66-" + elem.element_identifier);
+            part.setId(replaceParentheses("SP_800_66-" + elem.element_identifier, ".", ""));
             // part.setClazz(elem.element_type);
             part.setNs(SP_800_66_URI);
             part.setTitle(createMarkupLineEscaped(elem.title));
@@ -262,11 +266,17 @@ public class SP80066OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> buildFootnotePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, FOOTNOTE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart footnotePart = buildPartFromElementText(elem, FOOTNOTE_ELEMENT_TYPE);
-            footnotePart.setId("SP_800_66-" + elem.element_identifier);
+            footnotePart.setId(replaceParentheses("SP_800_66-" + elem.element_identifier, ".", ""));
             // footnotePart.setClazz(elem.element_type);
             footnotePart.setNs(SP_800_66_URI);
             return footnotePart;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    protected String replaceParentheses(String input, String openingReplace, String closingReplace) {
+        input = input.replaceAll("\\)\\(", openingReplace);
+        input = input.replaceAll("\\(", openingReplace).replaceAll("\\)", closingReplace);
+        return input;
     }
     
 }
