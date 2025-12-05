@@ -16,6 +16,7 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
+import gov.nist.secauto.oscal.lib.model.Link;
 import gov.nist.secauto.oscal.lib.model.Property;
 
 public class Csf20CprtOscalConverter extends AbstractOscalConverter {
@@ -46,8 +47,13 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
     private final String SUBCATEGORY_ELEMENT_TYPE = "subcategory";
     private final String IMPLEMENTATION_EXAMPLE_ELEMENT_TYPE = "implementation_example";
     private final String PARTY_ELEMENT_TYPE = "party";
+    private final String WITHDRAW_REASON_ELEMENT_TYPE = "withdraw_reason";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
+    private final String INCORPORATED_INTO_RELATIONSHIP_TYPE = "incorporated_into";
+    private final String MOVED_TO_RELATIONSHIP_TYPE = "moved_to";
+
+    private final String[] WITHDRAW_RELATIONSHIPS = new String[] {INCORPORATED_INTO_RELATIONSHIP_TYPE, MOVED_TO_RELATIONSHIP_TYPE};
 
     /**
      * The URI to use for CSF-specific props.
@@ -123,6 +129,19 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
 
             control.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
+            //Check if this category is withdrawn
+            List<CprtElement> withdrawReasons = getElementsSafely(elem.getGlobalIdentifier(), WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
+            if (withdrawReasons.size() > 0) {
+                control.addProp(buildWithdrawnProp());
+
+                // Create links to the control(s) this withdrawn control points to
+                List<Link> links = createWithdrawnLinks(withdrawReasons);
+
+                for (Link link : links) {
+                    control.addLink(link);
+                }
+            }
+
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -157,6 +176,19 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             }
 
             control.addProp(buildLabelProp(elem.element_identifier));
+
+            //Check if this subcategory is withdrawn
+            List<CprtElement> withdrawReasons = getElementsSafely(elem.getGlobalIdentifier(), WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE);
+            if (withdrawReasons.size() > 0) {
+                control.addProp(buildWithdrawnProp());
+
+                // Create links to the control(s) this withdrawn control points to
+                List<Link> links = createWithdrawnLinks(withdrawReasons);
+
+                for (Link link : links) {
+                    control.addLink(link);
+                }
+            }
 
             return control;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -197,5 +229,35 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
         sortProp.setName("sort-id");
         sortProp.setValue(sort.title);
         return sortProp;
+    }
+
+    // Get the destination identifier of a given withdraw_reason element (get the control a withdrawn control points to)
+    private List<String> getDestWithdrawIdentifiers(String parentId, String relationType) {
+        List<String> dest_withdraw_identifiers = getDestinationIdWithType(parentId, relationType).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        return dest_withdraw_identifiers;
+        
+    }
+    
+    // Create links to the control(s) a given withdrawn control points to
+    private List<Link> createWithdrawnLinks(List<CprtElement> withdrawReasons) {
+        List<Link> links = new ArrayList<Link>();
+        
+        // For each withdraw relationship type, create links of that type
+        for (String relationType : WITHDRAW_RELATIONSHIPS) {
+            List<String> dest_withdraw_identifiers = new ArrayList<String>();
+
+            // Get the control a withdrawn control points to
+            for (CprtElement withdrawReason : withdrawReasons) {
+                String withdraw_identifier = withdrawReason.getGlobalIdentifier();
+                dest_withdraw_identifiers.addAll(getDestWithdrawIdentifiers(withdraw_identifier, relationType));
+            }
+
+            links.addAll(createLinks(dest_withdraw_identifiers, relationType));
+        }
+
+        return links;
     }
 }
