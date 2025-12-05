@@ -3,6 +3,7 @@ package gov.nist.capordino.cprt.conversion.csf20;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
@@ -143,7 +144,9 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             }
 
             return control;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(Control::getId))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     /**
@@ -191,7 +194,9 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             }
 
             return control;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(Control::getId))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<ControlPart> buildSubcategoryImplementationExamples(Catalog catalog, String parentId) {
@@ -199,7 +204,9 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             ControlPart part = buildPartFromElementText(elem, "example", CSF_URI);
             part.setId(elem.element_identifier);
             return part;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(ControlPart::getId))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<Property> buildSubcategoryRiskPartyProps(String parentId) {
@@ -210,7 +217,9 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             riskPartyProp.setValue(elem.title);
             riskPartyProp.setRemarks(MarkupMultiline.fromMarkdown(elem.text));
             return riskPartyProp;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(Property::getValue))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private Property buildSortProp(String parentId) {
