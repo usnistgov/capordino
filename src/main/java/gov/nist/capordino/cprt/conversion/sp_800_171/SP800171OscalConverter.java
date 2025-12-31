@@ -151,10 +151,7 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
 
                 List<ControlPart> parts = new ArrayList<ControlPart>();
 
-                ControlPart statementPart = buildPartFromElementText(elem, "statement");
-                statementPart.setClazz("security_requirement");
-                statementPart.setParts(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
-                parts.add(statementPart);
+                parts.addAll(buildSecurityRequirementControls(catalog, elem.getGlobalIdentifier()));
 
                 // CPRT discussion -> OSCAL guidance
                 parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
@@ -354,29 +351,11 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
      */
     private List<ControlPart> buildSecurityRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            // Control control = new Control();
-            // control.setId("SP_800_171_" + elem.element_identifier);
-            // control.setClazz(elem.element_type);
-            // control.setTitle(createMarkupLineEscaped(elem.element_identifier));
-
-            // Some 800-171 security requirements don't have titles (overall security requirement VS a subsection of a security requirement)
-            // Don't add titles unless it's human-readable form
-
-            // ArrayList<ControlPart> parts = new ArrayList<ControlPart>();
-            // ControlPart part = buildPartFromElementText(elem, "statement");
-
-            // Security requirements (a,b,...) within overall security requirement
-            // part.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
-
-            // parts.add(part);
-            
-            // control.setParts(parts);
-
-            // control.addProp(buildLabelProp(elem.element_identifier));
-
-            // return control;
-            return buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier());
-        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll);
+            ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            statementPart.setClazz("security_requirement");
+            statementPart.setParts(buildSubcategoryImplementationExamples(catalog, elem.getGlobalIdentifier()));
+            return statementPart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<ControlPart> buildSubcategoryImplementationExamples(Catalog catalog, String parentId) {
