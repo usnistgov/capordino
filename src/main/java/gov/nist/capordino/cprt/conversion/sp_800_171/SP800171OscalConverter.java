@@ -174,7 +174,9 @@ public class SP800171OscalConverter extends AbstractOscalConverter {
             }
             
             return control;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(Control::getId))    
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     // Build RLinks to references to 800-53 controls, represented in CPRT site as Source Controls (no element type, external reference relationship type)
