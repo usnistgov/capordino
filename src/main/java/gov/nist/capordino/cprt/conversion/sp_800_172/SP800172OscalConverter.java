@@ -462,25 +462,25 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         return odp_param;
     }
 
-    // @Override
-    // protected String parseODPInElementText(CprtElement element) {
-    //     String text = element.text;
+    @Override
+    protected String parseODPInElementText(CprtElement element) {
+        String text = element.text;
 
-    //     // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
-    //     List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-    //         return elem;
-    //     }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
+        List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier().replaceAll("800_172", "800_172A"), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-    //     // For the assessment objective related to this control, get the related ODP(s)
-    //     for (CprtElement related_assessment_objective : related_assessment_objectives) {
-    //         List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-    //             return elem.element_identifier;
-    //         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        // For the assessment objective related to this control, get the related ODP(s)
+        for (CprtElement related_assessment_objective : related_assessment_objectives) {
+            List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-    //         // Replaced implicitly stated ODP with <insert odp_id>
-    //         text = insertImplicitParams(text, related_odps);
-    //     }
+            // Replaced implicitly stated ODP with <insert odp_id>
+            text = insertImplicitParams(text, related_odps);
+        }
         
-    //     return text;
-    // }
+        return text;
+    }
 }
