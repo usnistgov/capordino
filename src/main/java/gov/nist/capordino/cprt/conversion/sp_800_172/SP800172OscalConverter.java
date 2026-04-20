@@ -5,8 +5,10 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -22,6 +24,9 @@ import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
 import gov.nist.secauto.oscal.lib.model.Link;
+import gov.nist.secauto.oscal.lib.model.Parameter;
+import gov.nist.secauto.oscal.lib.model.ParameterGuideline;
+import gov.nist.secauto.oscal.lib.model.ParameterSelection;
 import gov.nist.secauto.oscal.lib.model.Property;
 
 public class SP800172OscalConverter extends AbstractOscalConverter {
@@ -63,6 +68,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String EXAMINE_ELEMENT_TYPE = "examine";
     private final String INTERVIEW_ELEMENT_TYPE = "interview";
     private final String TEST_ELEMENT_TYPE = "test";
+    private final String ODP_ELEMENT_TYPE = "odp";
+    private final String ODP_STATEMENT_ELEMENT_TYPE = "odp_statement";
+    private final String ODP_TYPE_ELEMENT_TYPE = "odp_type";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
@@ -156,6 +164,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             for (Property p : protectionStrategyProps) {
                 control.addProp(p);
             }
+
+            // ODPs, assignment parameters
+            control.setParams(createParams(elem));
 
             List<ControlPart> parts = new ArrayList<ControlPart>();
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
@@ -356,4 +367,120 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
         return examine_parts;
     }
+
+    private List<Parameter> createParams(CprtElement parent) {
+        // Get all assessment objectives associated with this control
+        // Then get all ODPs in the assessment objective
+        String parentId = parent.element_identifier;
+        List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            return get_odp_identifiers(elem.text, "<(.+?) .+?>");
+        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
+
+        String parent_doc_identifier = parent.doc_identifier.replaceAll("800_172", "800_172A");
+
+        // ODPs within ODPs
+        List<String> additional_odps = new ArrayList<String>();
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = parent_doc_identifier + ":" + odp_identifier;
+            
+            List<String> odps_within_odp = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            additional_odps.addAll(odps_within_odp);
+        }
+        odp_identifiers.addAll(additional_odps);
+
+        // LinkedHashSet to keep order and account for same ODPs in different objectives
+        Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
+        List<Parameter> odp_params = buildParams(parent_doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE);
+
+        
+        return odp_params;
+    }
+
+    @Override
+    // Builds a OSCAL Param for a given ODP id
+    protected Parameter buildParam(String odp_identifier, String doc_identifier, String odp_type_element_type) {
+        // Convert to global identifier, because of how elements map stores elements
+        String odp_global_identifier = doc_identifier + ":" + odp_identifier;
+
+        // Get the ODP element associated with the ODP id
+        CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+        // Get the ODP statement element associated with this ODP
+        CprtElement odp_statement_element = cprtRoot.getElementById(doc_identifier + ":" + "OS-" + odp_identifier);
+
+        // Create a Parameter object
+        Parameter odp_param = new Parameter();
+        odp_param.addProp(buildLabelProp(odp_identifier));
+        odp_param.setLabel(createMarkupLineEscaped(odp_element.title));
+
+        // Build param based on type
+        List<String> odp_types = getRelatedElementsBySourceIdWithType(odp_global_identifier, odp_type_element_type).map(elem -> {
+            return elem.element_identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        String odp_type = odp_types.get(0);
+        if (odp_type == null) {
+            throw new IllegalArgumentException("ODP " + odp_global_identifier + "has no ODP type");
+        }
+        
+        if (odp_type.equals("single_entry")) {
+            // Assignment type param
+            ParameterGuideline odp_param_guideline = new ParameterGuideline();
+            odp_param_guideline.setProse(createMarkupMultilineEscaped(odp_element.text));
+            odp_param.addGuideline(odp_param_guideline);
+
+            if (odp_statement_element != null) {
+                odp_param.setUsage(createMarkupMultilineEscaped(odp_statement_element.text));
+            }
+        }
+        else {
+            // Selection type param
+            ParameterSelection odp_param_selection = new ParameterSelection();
+            if (odp_type.equals("multi_select")) {
+                odp_param_selection.setHowMany("one-or-more");
+            }
+            else if (odp_type.equals("single_select")) {
+                odp_param_selection.setHowMany("one");
+            }
+            
+
+            List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text);
+
+            for (String choice : odp_param_choices) {
+                odp_param_selection.addChoice(createMarkupLineEscaped(choice));
+            }
+            odp_param.setSelect(odp_param_selection);
+        }
+        
+        // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
+        // String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
+        String escaped_odp_identifier = escapeSquareBracketsWithPeriods(odp_identifier);
+        odp_param.setId(escaped_odp_identifier);
+
+        return odp_param;
+    }
+
+    // @Override
+    // protected String parseODPInElementText(CprtElement element) {
+    //     String text = element.text;
+
+    //     // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
+    //     List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier(), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+    //         return elem;
+    //     }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+    //     // For the assessment objective related to this control, get the related ODP(s)
+    //     for (CprtElement related_assessment_objective : related_assessment_objectives) {
+    //         List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+    //             return elem.element_identifier;
+    //         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+    //         // Replaced implicitly stated ODP with <insert odp_id>
+    //         text = insertImplicitParams(text, related_odps);
+    //     }
+        
+    //     return text;
+    // }
 }
