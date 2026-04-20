@@ -60,6 +60,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String TACTIC_ELEMENT_TYPE = "tactic";
 
     private final String DETERMINATION_ELEMENT_TYPE = "determination";
+    private final String EXAMINE_ELEMENT_TYPE = "examine";
+    private final String INTERVIEW_ELEMENT_TYPE = "interview";
+    private final String TEST_ELEMENT_TYPE = "test";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
@@ -165,6 +168,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
             // Assessment objectives
             parts.addAll(createAssessmentObjectiveParts(catalog, elem.element_identifier));
+
+            // Assessment methods and objects
+            parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
             
             control.setParts(parts);
 
@@ -329,4 +335,25 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         return objective_parts;
     }
    
+    // Assessment methods are EXAMINE, INTERVIEW, TEST
+    private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
+        parentId = parentId.replaceAll("800_172", "800_172A");
+
+        ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        examine_parts.addAll(interview_parts);
+        examine_parts.addAll(test_parts);
+
+        return examine_parts;
+    }
 }
