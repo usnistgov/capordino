@@ -59,6 +59,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String SORT_ELEMENT_TYPE = "sort";
     private final String TACTIC_ELEMENT_TYPE = "tactic";
 
+    private final String DETERMINATION_ELEMENT_TYPE = "determination";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
@@ -162,6 +163,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
             parts.addAll(createAdversaryEffectParts(catalog, elem.getGlobalIdentifier(), ADVERSARY_EFFECT_ELEMENT_TYPE));
 
+            // Assessment objectives
+            parts.addAll(createAssessmentObjectiveParts(catalog, elem.element_identifier));
             
             control.setParts(parts);
 
@@ -316,6 +319,14 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         }
 
         return source_controls_links;
+    }
+
+    private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
+        List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            ControlPart part =  buildAssessmentObjectivePart(elem);
+            return part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return objective_parts;
     }
    
 }
