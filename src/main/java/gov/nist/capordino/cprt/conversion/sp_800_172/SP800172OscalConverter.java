@@ -10,6 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.pojo.CprtElement;
@@ -471,14 +474,21 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             return elem;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-        // For the assessment objective related to this control, get the related ODP(s)
+        Set<CprtElement> all_related_odps = new LinkedHashSet<CprtElement>();
+
+        // For the assessment objectives related to this control, get the related ODP(s)
         for (CprtElement related_assessment_objective : related_assessment_objectives) {
-            List<String> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-                return elem.element_identifier;
+            
+            List<CprtElement> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
 
-            // Replaced implicitly stated ODP with <insert odp_id>
-            text = insertImplicitParams(text, related_odps);
+            all_related_odps.addAll(related_odps);
+        }
+
+        // Replaced implicitly stated ODP with <insert odp_id>
+        if (!all_related_odps.isEmpty()) {
+            text = insertImplicitParamsWithElements(text, new ArrayList<CprtElement>(all_related_odps));
         }
         
         return text;
@@ -499,6 +509,38 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             // Only replace the ODP that matches this identifier
             String specific_odp_pattern = "<" + escaped_odp_identifier + " .+?>"; 
             text = text.replaceAll(specific_odp_pattern, insert);
+        }
+
+        return text;
+    }
+
+    
+    // Replace [Selection: ...] or [Assignment: ...] with <insert> in text
+    // Use when ODP id is implicit: control items, ODP contained inside another ODP
+    protected String insertImplicitParamsWithElements(String text, List<CprtElement> related_odps) {
+         // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
+         String odp_multi_select_pattern = "(\\[Selection \\(one or more\\): .+\\])";
+         // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
+         String odp_assign_pattern = "(\\[Assignment: .+?\\])";
+
+        // Replace ODP with insert param
+        // NOTE: assumes ODPs are non-repeating and in order in the text
+        for (CprtElement related_odp : related_odps) {
+            String odp_identifier = related_odp.element_identifier;
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
+
+            // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
+            // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
+            Pattern multi_select_pattern = Pattern.compile(odp_multi_select_pattern);
+            Matcher multi_select_matcher = multi_select_pattern.matcher(text);
+            
+            // Replace either a select or assignment pattern
+            if (multi_select_matcher.find()) {
+                text = text.replaceFirst(odp_multi_select_pattern, insert);
+            }
+            else {
+                text = text.replaceFirst(odp_assign_pattern, insert);
+            }
         }
 
         return text;
