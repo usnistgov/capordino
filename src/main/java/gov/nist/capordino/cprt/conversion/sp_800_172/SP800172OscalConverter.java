@@ -518,8 +518,15 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     // Replace [Selection: ...] or [Assignment: ...] with <insert> in text
     // Use when ODP id is implicit: control items, ODP contained inside another ODP
     protected String insertImplicitParamsWithElements(String text, List<CprtElement> related_odps) {
-        // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
-        String odp_multi_select_pattern = "(\\[Selection:?\\s+\\(one or more\\):\\s+.+\\])";
+        // After Selection (one or more): can't use greedy regex that matches everything up to the last ] of the text.
+        // The last ] of the text is not necessarily the closing bracket of the selection block. It may be another assignment/selection block that comes after.
+        // For all text that comes after selection block, match to two possible options
+        // 1. Any character that isn't a [ or ]
+        // 2. If character is [, then match up to the next encountered ]
+        // This captures assignment blocks within selection blocks, and stops if it encounters a ] without a [ that comes before. This signals the end of the selection block.
+        // NOTE: Assumes maximum of 1 nested level. No assignment blocks within a selection block within a selection block.
+
+        String odp_multi_select_pattern = "(\\[Selection:?\\s+\\(one or more\\):\\s+(?:[^\\[\\]]|\\[[^\\]]*\\])+\\])";
         // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
         String odp_assign_pattern = "(\\[Assignment:\\s+.+?\\])";
 
