@@ -518,10 +518,10 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     // Replace [Selection: ...] or [Assignment: ...] with <insert> in text
     // Use when ODP id is implicit: control items, ODP contained inside another ODP
     protected String insertImplicitParamsWithElements(String text, List<CprtElement> related_odps) {
-         // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
-         String odp_multi_select_pattern = "(\\[Selection \\(one or more\\): .+\\])";
-         // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
-         String odp_assign_pattern = "(\\[Assignment: .+?\\])";
+        // Need greedy regex for maximum possible match, otherwise it matches incorrectly to an ODP within this ODP
+        String odp_multi_select_pattern = "(\\[Selection:?\\s+\\(one or more\\):\\s+.+\\])";
+        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
+        String odp_assign_pattern = "(\\[Assignment:\\s+.+?\\])";
 
         // Replace ODP with insert param
         // NOTE: assumes ODPs are non-repeating and in order in the text
