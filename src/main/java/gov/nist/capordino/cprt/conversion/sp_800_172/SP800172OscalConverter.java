@@ -3,6 +3,7 @@ package gov.nist.capordino.cprt.conversion.sp_800_172;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -449,7 +450,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             }
             
 
-            List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text);
+            List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text, odp_global_identifier);
 
             for (String choice : odp_param_choices) {
                 odp_param_selection.addChoice(createMarkupLineEscaped(choice));
@@ -551,5 +552,18 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         }
 
         return text;
+    }
+
+    // Parse choices in a multi_select type ODP
+    protected List<String> parseParamChoices(String odp_statement_text, String odp_text, String topLevelODPIdentifier) {
+        // For multi_select ODPs, choices are in odp_statement_text but nested ODP ids are NOT in odp_text, as in 800-171. Find the assignment ODPs that have relationships with the top level selection ODP.
+        List<String> nested_odps = getRelatedElementsBySourceIdWithType(topLevelODPIdentifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem.element_identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        String choices = insertImplicitParams(odp_statement_text, nested_odps);
+        String[] choices_list = choices.split(";");
+
+        return Arrays.asList(choices_list);
     }
 }
