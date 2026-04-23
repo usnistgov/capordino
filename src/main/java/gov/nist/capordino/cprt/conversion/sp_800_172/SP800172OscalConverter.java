@@ -119,7 +119,34 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
                 return group;
             })
-            .sorted(Comparator.comparing(CatalogGroup::getId))
+            // Sort based on group id
+            // .sorted(Comparator.comparing(CatalogGroup::getId, (id1, id2) -> {
+            //     // IDs are Strings but the last part should be numerically compared to be in correct order: 3.1, 3.2, 3.11
+            //     String[] idPrefix1 = id1.split("\\.");
+            //     String[] idPrefix2 = id2.split("\\.");
+
+            //     if (idPrefix1.length < 2 || idPrefix2.length < 2) {
+            //         return id1.compareTo(id2);
+            //     }
+
+            //     // First, string-compare the IDs
+            //     int comparePrefix = idPrefix1[0].compareTo(idPrefix2[0]);
+
+            //     // If prefix are same, numerically compare the last part
+            //     if (comparePrefix == 0) {
+            //         return Integer.compare(Integer.parseInt(idPrefix1[1]), Integer.parseInt(idPrefix2[1]));
+            //     }
+
+            //     return comparePrefix;
+            // }))
+            .sorted(Comparator.comparing(group -> 
+                group.getProps().stream()
+                    // Get the sort-id prop
+                    .filter(prop -> prop.getName().equals("sort-id"))
+                    // Compare based on value of sort-id like "00001"
+                    .map(Property::getValue)
+                    .findFirst().orElse("")
+            ))
             .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
