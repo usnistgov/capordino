@@ -97,6 +97,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final URI SP_800_172_URI = URI.create("https://csrc.nist.gov/ns/SP-800-172");
 
     private final String SP_800_171_r3_IDENTIFIER = "SP_800_171_3_0_0";
+    private final String SP_800_172_r3_IDENTIFIER = "SP_800_172_3_0_0";
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
@@ -109,12 +110,12 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<CatalogGroup> buildFamilyGroups(Catalog catalog) {
         // Recursively go down tree of elements, to build family groups
         return cprtRoot.getElements().stream()
-            .filter(elem -> elem.doc_identifier.equals("SP_800_172_3_0_0"))
+            .filter(elem -> elem.doc_identifier.equals(SP_800_172_r3_IDENTIFIER))
             .filter(elem -> elem.element_type.equals(FAMILY_ELEMENT_TYPE))
             .map(elem -> {
                 // For each 800-172 family, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
-                group.setId("SP_800_172_" + elem.element_identifier);
+                group.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
@@ -196,7 +197,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<Control> buildSecurityRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId("SP_800_172_" + elem.element_identifier);
+            control.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
             control.setClazz(elem.element_type);
             
             control.addProp(buildProp("sort-id", elem.element_identifier));
@@ -259,7 +260,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> buildEnhancedSecurityRequirementParts(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, ENHANCED_SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            statementPart.setId("SP_800_172_" + elem.element_identifier + "_smt");
+            statementPart.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier + "_smt");
             statementPart.setParts(buildEnhancedSecurityRequirementSubParts(catalog, elem.getGlobalIdentifier()));
             return statementPart;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -269,7 +270,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         try {
             return getRelatedElementsBySourceIdWithType(parentId, ENHANCED_SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 ControlPart part = buildPartFromElementText(elem, "item");
-                part.setId("SP_800_172_" + elem.element_identifier);
+                part.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
                 
                 part.setParts(buildEnhancedSecurityRequirementSubParts(catalog, elem.getGlobalIdentifier()));
 
@@ -284,7 +285,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
-            gdn_part.setId(getEscapedIdentifier("SP_800_172_" + removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
+            gdn_part.setId(getEscapedIdentifier(SP_800_172_r3_IDENTIFIER + "_" + removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
             gdn_part.setClazz(elem.element_type);
             gdn_part.setNs(SP_800_172_URI);
             return gdn_part;
@@ -485,58 +486,58 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     protected List<Parameter> buildAggregateParams(Set<String> odp_identifiers, String parentId) {
         List<Parameter> aggregateParams = new ArrayList<Parameter>();
 
-        // Map<String, List<CprtElement>> odpStatementMatches = new LinkedHashMap<String, List<CprtElement>>();
-        // // build a hashmap with key odp statement and value list of odps that have that statement
-        // for (String odp_identifier : odp_identifiers) {
-        //     String odp_global_identifier = "SP_800_172_3_0_0" + ":" + odp_identifier;
-        //     // Get the ODP element associated with the ODP id
-        //     CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
-        //     // Get the ODP statement element associated with this ODP
-        //     CprtElement odp_statement_element = cprtRoot.getElementById("SP_800_172_3_0_0:OS-" + odp_identifier.toLowerCase());
+        Map<String, List<CprtElement>> odpStatementMatches = new LinkedHashMap<String, List<CprtElement>>();
+        // build a hashmap with key odp statement and value list of odps that have that statement
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = SP_800_172_r3_IDENTIFIER + ":" + odp_identifier;
+            // Get the ODP element associated with the ODP id
+            CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+            // Get the ODP statement element associated with this ODP
+            CprtElement odp_statement_element = cprtRoot.getElementById(SP_800_172_r3_IDENTIFIER + ":OS-" + odp_identifier.toLowerCase());
 
-        //     if (odp_element == null || odp_statement_element == null) {
-        //         System.out.println(odp_global_identifier);
-        //         continue;
-        //     }
+            if (odp_element == null || odp_statement_element == null) {
+                System.out.println(odp_global_identifier);
+                continue;
+            }
 
-        //     String odpStatement = odp_statement_element.text;
+            String odpStatement = odp_statement_element.text;
 
-        //     if (odpStatementMatches.containsKey(odpStatement)) {
-        //         // Also check if ODP title is contained in odp statement (protects against CPRT bug where unrelated ODPs have same statement)
-        //         if (odpStatement.contains(odp_element.title) || odp_element.title.equals("SELECTED PARAMETER VALUE(S)") || odp_element.title.isBlank()) {
-        //             odpStatementMatches.get(odpStatement).add(odp_element);
-        //         }
-        //     } else {
-        //         List<CprtElement> odpMatches = new ArrayList<CprtElement>();
-        //         odpMatches.add(odp_element);
-        //         odpStatementMatches.put(odpStatement, odpMatches);
-        //     }
-        // }
+            if (odpStatementMatches.containsKey(odpStatement)) {
+                // Also check if ODP title is contained in odp statement (protects against CPRT bug where unrelated ODPs have same statement)
+                if (odpStatement.contains(odp_element.title)) {
+                    odpStatementMatches.get(odpStatement).add(odp_element);
+                }
+            } else {
+                List<CprtElement> odpMatches = new ArrayList<CprtElement>();
+                odpMatches.add(odp_element);
+                odpStatementMatches.put(odpStatement, odpMatches);
+            }
+        }
 
-        // int prmId = 1;
-        // // build an aggregate param for each pair in the hashmap, only if there are multiple ODPs that match to same statement
-        // for (Map.Entry<String, List<CprtElement>> entry : odpStatementMatches.entrySet()) {
-        //     String odpStatement = entry.getKey();
-        //     List<CprtElement> odpMatches = entry.getValue();
+        int prmId = 1;
+        // build an aggregate param for each pair in the hashmap, only if there are multiple ODPs that match to same statement
+        for (Map.Entry<String, List<CprtElement>> entry : odpStatementMatches.entrySet()) {
+            String odpStatement = entry.getKey();
+            List<CprtElement> odpMatches = entry.getValue();
 
-        //     if (odpMatches.size() > 1) {
-        //         // Create an aggregate param for ODPs that share the same statement
-        //         Parameter aggregateParam = new Parameter();
+            if (odpMatches.size() > 1) {
+                // Create an aggregate param for ODPs that share the same statement
+                Parameter aggregateParam = new Parameter();
 
-        //         aggregateParam.setId("SP_800_172_A." + parentId + "_prm_" + prmId);
-        //         prmId++;
+                aggregateParam.setId(SP_800_172_r3_IDENTIFIER + "_A." + parentId + "_prm_" + prmId);
+                prmId++;
 
-        //         for (CprtElement odpMatch : odpMatches) {
-        //             String odp_identifier = odpMatch.element_identifier;
-        //             aggregateParam.addProp(buildProp("aggregates", odp_identifier, "http://csrc.nist.gov/ns/rmf"));
+                for (CprtElement odpMatch : odpMatches) {
+                    String odp_identifier = odpMatch.element_identifier;
+                    aggregateParam.addProp(buildProp("aggregates", odp_identifier, "http://csrc.nist.gov/ns/rmf"));
 
-        //             aggregateParamsMap.put(odp_identifier, aggregateParam.getId());
-        //         }
-        //         aggregateParam.setLabel(createMarkupLineEscaped(odpStatement));
+                    aggregateParamsMap.put(odp_identifier, aggregateParam.getId());
+                }
+                aggregateParam.setLabel(createMarkupLineEscaped(odpStatement));
 
-        //         aggregateParams.add(aggregateParam);
-        //     }
-        // }
+                aggregateParams.add(aggregateParam);
+            }
+        }
 
         return aggregateParams;
     }
@@ -605,7 +606,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
             // String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
             String escaped_odp_identifier = escapeSquareBracketsWithPeriods(odp_identifier);
-            odp_param.setId("SP_800_172_" + escaped_odp_identifier);
+            odp_param.setId(SP_800_172_r3_IDENTIFIER + "_" + escaped_odp_identifier);
         }
 
         return odp_param;
@@ -649,7 +650,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
-            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", "SP_800_172_" + odp_identifier) ;
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", SP_800_172_r3_IDENTIFIER + "_" + odp_identifier) ;
             String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
 
             // Only replace the ODP that matches this identifier
@@ -686,7 +687,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", aggregateParamsMap.get(odp_identifier)); // Assumes that params that are part of an aggregate param are not referenced individually in a statement
             }
             else {
-                insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", "SP_800_172_" + odp_identifier);
+                insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", SP_800_172_r3_IDENTIFIER + "_" + odp_identifier);
             }
 
             // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
