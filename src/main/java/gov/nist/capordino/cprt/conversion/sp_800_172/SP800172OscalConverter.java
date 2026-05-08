@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String ENHANCED_SECURITY_REQUIREMENT_ELEMENT_TYPE = "enhanced_security_requirement";
     private final String SORT_ELEMENT_TYPE = "sort";
     private final String TACTIC_ELEMENT_TYPE = "tactic";
+    private final String WITHDRAW_REASON_ELEMENT_TYPE = "withdraw_reason";
 
     private final String DETERMINATION_ELEMENT_TYPE = "determination";
     private final String EXAMINE_ELEMENT_TYPE = "examine";
@@ -80,6 +82,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
 
+    private final String INCORPORATED_INTO_RELATIONSHIP_TYPE = "incorporated_into";
+    private final String[] WITHDRAW_RELATIONSHIPS = new String[] {INCORPORATED_INTO_RELATIONSHIP_TYPE, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE};
+
     private final String DISCUSSION_PREFIX = "D-";
 
     private Map<String, Link> createdReferences = new HashMap<String, Link>();
@@ -90,6 +95,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
      * The URI to use for 800-172-specific props.
      */
     private final URI SP_800_172_URI = URI.create("https://csrc.nist.gov/ns/SP-800-172");
+
+    private final String SP_800_171_r3_IDENTIFIER = "SP_800_171_3_0_0";
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
@@ -199,7 +206,13 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             if (elem.title.equals("Withdrawn")) {
                 control.setTitle(createMarkupLineEscaped(elem.element_identifier));
                 control.addProp(buildWithdrawnProp());
-                control.setParts(buildEnhancedSecurityRequirementParts(catalog, elem.getGlobalIdentifier()));
+                // control.setParts(buildEnhancedSecurityRequirementParts(catalog, elem.getGlobalIdentifier()));
+                // Create links to the control(s) this withdrawn control points to
+                List<Link> links = createWithdrawnLinks(catalog, elem.getGlobalIdentifier());
+
+                for (Link link : links) {
+                    control.addLink(link);
+                }
             }
             else {
                 control.setTitle(createMarkupLineEscaped(elem.title));
@@ -392,7 +405,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 Resource source_control_resource = new Resource();
                 source_control_resource.setTitle(MarkupLine.fromMarkdown(source_control_identifier));
                 Rlink rlink = new Rlink();
-                rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_1_1/home?element=" + source_control_identifier));
+                rlink.setHref(URI.create("https://csrc.nist.gov/projects/cprt/catalog#/cprt/framework/version/SP_800_53_5_2_0/home?element=" + source_control_identifier));
                 source_control_resource.addRlink(rlink);
 
                 Link link = newLinkRel(catalog, source_control_resource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
@@ -480,6 +493,11 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         //     CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
         //     // Get the ODP statement element associated with this ODP
         //     CprtElement odp_statement_element = cprtRoot.getElementById("SP_800_172_3_0_0:OS-" + odp_identifier.toLowerCase());
+
+        //     if (odp_element == null || odp_statement_element == null) {
+        //         System.out.println(odp_global_identifier);
+        //         continue;
+        //     }
 
         //     String odpStatement = odp_statement_element.text;
 
@@ -699,5 +717,58 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         String[] choices_list = choices.split(";");
 
         return Arrays.asList(choices_list);
+    }
+
+    // Get the destination identifier of a given withdraw_reason element (get the control a withdrawn control points to)
+    private List<String> getDestWithdrawIdentifiers(String parentId, String relationType) {
+        List<String> dest_withdraw_identifiers = getDestinationIdWithType(parentId, relationType).map(identifier -> {
+            return identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        return dest_withdraw_identifiers;
+        
+    }
+    
+    // Create links to the control(s) a given withdrawn control points to
+    private List<Link> createWithdrawnLinks(Catalog catalog, String parentId) {
+        // Get the withdraw_reason element associated with the given element
+        List<String> withdraw_identifiers = getRelatedElementsBySourceIdWithType(parentId, WITHDRAW_REASON_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem.getGlobalIdentifier();
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        List<Link> links = new ArrayList<Link>();
+        
+        // For each withdraw relationship type, create links of that type
+        for (String relationType : WITHDRAW_RELATIONSHIPS) {
+            List<String> dest_withdraw_identifiers = new ArrayList<String>();
+
+            // Get the control a withdrawn control points to
+            for (String withdraw_identifier : withdraw_identifiers) {
+                dest_withdraw_identifiers.addAll(getDestWithdrawIdentifiers(withdraw_identifier, relationType));
+            }
+
+            if (relationType.equals(EXTERNAL_REFERENCE_RELATIONSHIP_TYPE) && dest_withdraw_identifiers.size() > 0) {
+                if (! createdReferences.containsKey(SP_800_171_r3_IDENTIFIER)) {
+                     Resource SP_800_171_r3_resource = new Resource();
+                    SP_800_171_r3_resource.setTitle(MarkupLine.fromMarkdown(SP_800_171_r3_IDENTIFIER));
+                    Rlink rlink = new Rlink();
+                    rlink.setHref(URI.create("https://csrc.nist.gov/pubs/sp/800/171/r3/final"));
+                    SP_800_171_r3_resource.addRlink(rlink);
+
+                    Link link = newLinkRel(catalog, SP_800_171_r3_resource, EXTERNAL_REFERENCE_RELATIONSHIP_TYPE);
+                    createdReferences.put(SP_800_171_r3_IDENTIFIER, link);
+
+                    links.add(link);
+                }
+                else {
+                    Link link = createdReferences.get(SP_800_171_r3_IDENTIFIER);
+                    links.add(link);
+                }
+            }
+
+            links.addAll(createLinks(dest_withdraw_identifiers, relationType));
+        }
+
+        return links;
     }
 }
