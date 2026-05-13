@@ -524,7 +524,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 // Create an aggregate param for ODPs that share the same statement
                 Parameter aggregateParam = new Parameter();
 
-                aggregateParam.setId(SP_800_172_r3_IDENTIFIER + "_A." + parentId + "_prm_" + prmId);
+                aggregateParam.setId("A." + parentId + "_prm_" + prmId);
                 prmId++;
 
                 for (CprtElement odpMatch : odpMatches) {
@@ -606,7 +606,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
             // String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
             String escaped_odp_identifier = escapeSquareBracketsWithPeriods(odp_identifier);
-            odp_param.setId(SP_800_172_r3_IDENTIFIER + "_" + escaped_odp_identifier);
+            odp_param.setId(escaped_odp_identifier);
         }
 
         return odp_param;
@@ -650,7 +650,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
-            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", SP_800_172_r3_IDENTIFIER + "_" + odp_identifier) ;
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
             String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
 
             // Only replace the ODP that matches this identifier
@@ -687,7 +687,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", aggregateParamsMap.get(odp_identifier)); // Assumes that params that are part of an aggregate param are not referenced individually in a statement
             }
             else {
-                insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", SP_800_172_r3_IDENTIFIER + "_" + odp_identifier);
+                insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier);
             }
 
             // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
