@@ -425,6 +425,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
         List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
             ControlPart part =  buildAssessmentObjectivePart(elem);
+            part.setId(elem.element_identifier);
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         return objective_parts;
