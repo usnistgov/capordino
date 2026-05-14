@@ -260,7 +260,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> buildEnhancedSecurityRequirementParts(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, ENHANCED_SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            statementPart.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier + "_smt");
+            statementPart.setId(elem.element_identifier);
             statementPart.setParts(buildEnhancedSecurityRequirementSubParts(catalog, elem.getGlobalIdentifier()));
             return statementPart;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -270,7 +270,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
         try {
             return getRelatedElementsBySourceIdWithType(parentId, ENHANCED_SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 ControlPart part = buildPartFromElementText(elem, "item");
-                part.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
+                part.setId(elem.element_identifier);
                 
                 part.setParts(buildEnhancedSecurityRequirementSubParts(catalog, elem.getGlobalIdentifier()));
 
@@ -285,7 +285,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createGuidancePart(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, DISCUSSION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
-            gdn_part.setId(getEscapedIdentifier(SP_800_172_r3_IDENTIFIER + "_" + removeCprtPrefix(elem.element_identifier, DISCUSSION_PREFIX) + "_gdn"));
+            gdn_part.setId(getEscapedIdentifier(elem.element_identifier));
             gdn_part.setClazz(elem.element_type);
             gdn_part.setNs(SP_800_172_URI);
             return gdn_part;
