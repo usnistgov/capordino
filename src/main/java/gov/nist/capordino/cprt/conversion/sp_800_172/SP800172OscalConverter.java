@@ -287,7 +287,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             ControlPart gdn_part = buildPartFromElementText(elem, "guidance");
             gdn_part.setId(getEscapedIdentifier(elem.element_identifier));
             gdn_part.setClazz(elem.element_type);
-            gdn_part.setNs(SP_800_172_URI);
+            // gdn_part.setNs(SP_800_172_URI);          // Minimize unnecessary custom namespace
             return gdn_part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
@@ -387,7 +387,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
     private List<Property> createProtectionStrategyProps(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, PROTECTION_STRATEGY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            Property ps_prop = buildProp(PROTECTION_STRATEGY_ELEMENT_TYPE, elem.element_identifier, SP_800_172_URI.toString());
+            Property ps_prop = buildPropWithClass("marking", elem.element_identifier, PROTECTION_STRATEGY_ELEMENT_TYPE);
             ps_prop.setRemarks(createMarkupMultilineEscaped(elem.title));
             return ps_prop;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);

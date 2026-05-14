@@ -178,7 +178,7 @@ public abstract class AbstractOscalConverter {
 
     private Metadata buildMetadata(@Nonnull Catalog catalog) {
         Metadata metadata = new Metadata();
-        metadata.setOscalVersion("v1.1.3");
+        metadata.setOscalVersion("v1.2.2");
         metadata.setLastModified(ZonedDateTime.now());
         
         metadata.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
@@ -358,6 +358,12 @@ public abstract class AbstractOscalConverter {
 
     protected String removeSquareBrackets(String input) {
         return input.replaceAll("\\[", "").replaceAll("\\]", "");
+    }
+
+    protected Property buildPropWithClass(String name, String value, String clazz) {
+        Property prop = buildProp(name, value);
+        prop.setClazz(clazz);
+        return prop;
     }
 
 
