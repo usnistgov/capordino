@@ -293,6 +293,16 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     }
 
     private List<ControlPart> createAdversaryEffectParts(Catalog catalog, String parentId, String elemType) {
+        /*
+            A security_requirement element is linked to multiple adversary_effect elements
+            The first adversary_effect element (AE-03.xx.xx-1) is linked to 800-160 reference_item element
+            Starting with the second adversary_effect element, they are linked to effect elements, such as Preclude
+                These effect elements are unique to each security requirement (ids for effect elements contain the security requirement id)
+                even though their contents are mostly the same
+            The effect elements are linked to impact, expected_result, and tactic elements, which are not unique to each security requirement. Shared among all.
+            Tactic elements are linked to example elements.
+
+        */
         List<CprtElement> adversaryEffectElements = getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             return elem;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -305,8 +315,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             CprtElement SP_800_160_element = SP_800_160_element_list.get(0);
 
             ControlPart topLevelAEPart = new ControlPart();
-            topLevelAEPart.setName(elemType);
-            topLevelAEPart.setNs(SP_800_172_URI);
+            topLevelAEPart.setName("guidance");
+            topLevelAEPart.setClazz(elemType);
             topLevelAEPart.setId(SP_800_160_adversary_element.element_identifier);
             
             if (! createdReferences.containsKey(SP_800_160_element.element_identifier)) {
@@ -319,19 +329,21 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 Link link = createdReferences.get(SP_800_160_element.element_identifier);
                 topLevelAEPart.addLink(link);
             }
-            adversaryEffectParts.add(topLevelAEPart);
+            
             
             for (int adversary_index = 1; adversary_index < adversaryEffectElements.size(); adversary_index++) {
                 CprtElement adversaryElement = adversaryEffectElements.get(adversary_index);
 
                 List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
                 ControlPart effectPart = parseAdversaryEffectElement(effectElementList, adversaryElement.element_identifier);
-                adversaryEffectParts.add(effectPart);
+                topLevelAEPart.addPart(effectPart);
 
                 List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
                 ControlPart tacticPart = parseAdversaryEffectElement(tacticElementList, adversaryElement.element_identifier);
-                adversaryEffectParts.add(tacticPart);
+                topLevelAEPart.addPart(tacticPart);
             }
+
+            adversaryEffectParts.add(topLevelAEPart);
         }
 
         return adversaryEffectParts;
