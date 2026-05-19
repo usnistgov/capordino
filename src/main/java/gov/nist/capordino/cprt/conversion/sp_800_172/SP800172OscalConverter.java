@@ -315,7 +315,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             CprtElement SP_800_160_element = SP_800_160_element_list.get(0);
 
             ControlPart topLevelAEPart = new ControlPart();
-            topLevelAEPart.setName("guidance");
+            topLevelAEPart.setName("statement");
             topLevelAEPart.setClazz(elemType);
             topLevelAEPart.setId(SP_800_160_adversary_element.element_identifier);
             
@@ -335,12 +335,16 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 CprtElement adversaryElement = adversaryEffectElements.get(adversary_index);
 
                 List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
+                if (effectElementList.size() > 0) {
                 ControlPart effectPart = parseAdversaryEffectElement(effectElementList, adversaryElement.element_identifier);
                 topLevelAEPart.addPart(effectPart);
+                }
 
                 List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
+                if (tacticElementList.size() > 0) {
                 ControlPart tacticPart = parseAdversaryEffectElement(tacticElementList, adversaryElement.element_identifier);
                 topLevelAEPart.addPart(tacticPart);
+            }
             }
 
             adversaryEffectParts.add(topLevelAEPart);
@@ -384,8 +388,8 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     }
 
     private ControlPart buildAdversaryEffectPart(CprtElement elem, String idPrefix) {
-        ControlPart part = buildPartFromElementText(elem, elem.element_identifier, SP_800_172_URI);
-        part.setClazz(elem.element_type);
+        ControlPart part = buildPartFromElementText(elem, "item");
+        part.setClazz(elem.element_identifier);
         part.setProse(createMarkupMultilineEscaped(elem.title + "\n\n" + elem.text));
         part.setId(idPrefix + "-" + elem.element_type);
         return part;
