@@ -98,6 +98,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
     private final String SP_800_171_r3_IDENTIFIER = "SP_800_171_3_0_0";
     private final String SP_800_172_r3_IDENTIFIER = "SP_800_172_3_0_0";
+    private final String SP_800_172_IDENTIFIER = "SP_800_172";
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
@@ -115,7 +116,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             .map(elem -> {
                 // For each 800-172 family, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
-                group.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
+                group.setId(SP_800_172_IDENTIFIER + "_" + elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
@@ -197,12 +198,16 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<Control> buildSecurityRequirementControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SECURITY_REQUIREMENT_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId(SP_800_172_r3_IDENTIFIER + "_" + elem.element_identifier);
+            control.setId(SP_800_172_IDENTIFIER + "_" + elem.element_identifier);
             control.setClazz(elem.element_type);
             
-            control.addProp(buildProp("sort-id", elem.element_identifier));
+            // control.addProp(buildProp("sort-id", elem.element_identifier));
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            if (sortProp != null) {
+                control.addProp(sortProp);
+            }
             control.addProp(buildLabelProp(elem.element_identifier));
-
+            control.addProp(buildProp("alt-identifier", elem.element_identifier));
 
             if (elem.title.equals("Withdrawn")) {
                 control.setTitle(createMarkupLineEscaped(elem.element_identifier));
@@ -254,7 +259,16 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             }
             
             return control;
-        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        })
+        .sorted(Comparator.comparing(group -> 
+            group.getProps().stream()
+                // Get the sort-id prop
+                .filter(prop -> prop.getName().equals("sort-id"))
+                // Compare based on value of sort-id like "00001"
+                .map(Property::getValue)
+                .findFirst().orElse("")
+        ))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     private List<ControlPart> buildEnhancedSecurityRequirementParts(Catalog catalog, String parentId) {
@@ -336,15 +350,15 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
                 List<CprtElement> effectElementList = getAdversaryEffectElements(adversaryElement, EFFECT_ELEMENT_TYPE);
                 if (effectElementList.size() > 0) {
-                ControlPart effectPart = parseAdversaryEffectElement(effectElementList, adversaryElement.element_identifier);
-                topLevelAEPart.addPart(effectPart);
+                    ControlPart effectPart = parseAdversaryEffectElement(effectElementList, adversaryElement.element_identifier);
+                    topLevelAEPart.addPart(effectPart);
                 }
-
+                
                 List<CprtElement> tacticElementList = getAdversaryEffectElements(adversaryElement, TACTIC_ELEMENT_TYPE);
                 if (tacticElementList.size() > 0) {
-                ControlPart tacticPart = parseAdversaryEffectElement(tacticElementList, adversaryElement.element_identifier);
-                topLevelAEPart.addPart(tacticPart);
-            }
+                    ControlPart tacticPart = parseAdversaryEffectElement(tacticElementList, adversaryElement.element_identifier);
+                    topLevelAEPart.addPart(tacticPart);
+                }
             }
 
             adversaryEffectParts.add(topLevelAEPart);
@@ -441,7 +455,7 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
         List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
             ControlPart part =  buildAssessmentObjectivePart(elem);
-            part.setId(elem.element_identifier);
+            part.setId(escapeSquareBracketsWithPeriods(elem.element_identifier));
             return part;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
         return objective_parts;
