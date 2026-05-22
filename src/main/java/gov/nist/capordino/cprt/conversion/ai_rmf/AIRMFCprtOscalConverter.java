@@ -97,7 +97,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
                 CatalogGroup group = new CatalogGroup();
                 group.setId(elem.element_identifier);
                 group.setClazz(elem.element_type);
-                group.setTitle(MarkupLine.fromMarkdown(elem.title));
+                group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
                 group.addPart(buildPartFromElementText(elem, "overview"));
                 // For AI RMF category, create an OSCAL group
@@ -107,8 +107,6 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
                 if (sortProp != null) {
                     group.addProp(sortProp);
                 }
-
-                group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
 
                 return group;
             }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
@@ -123,22 +121,53 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             CatalogGroup group = new CatalogGroup();
             group.setId(elem.element_identifier);
             group.setClazz(elem.element_type);
-            group.setTitle(MarkupLine.fromMarkdown(elem.title));
+            group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
             group.addPart(buildPartFromElementText(elem, "overview"));
 
             // For AI RMF subcategory, create an OSCAL control
+            group.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
            
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
             if (sortProp != null) {
                 group.addProp(sortProp);
             }
 
-            group.addProp(buildLabelProp(elem.title + " (" + elem.element_identifier + ")"));
-
             return group;
         })
         .sorted(Comparator.comparing(CatalogGroup::getId))
+        .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    /**
+     * Build the third level control of the catalog, represented in AI RMF as subcategories.
+     */
+    private List<Control> buildSubcategoryControls(Catalog catalog, String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, SUBCATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            Control control = new Control();
+            control.setId(elem.element_identifier);
+            control.setClazz(elem.element_type);
+
+            control.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
+
+            List<ControlPart> parts = new ArrayList<ControlPart>();
+
+            ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            parts.add(statementPart);
+            // Subcategory parts - about, documentation, resource, reference, suggested action
+
+
+            
+            control.setParts(parts);
+
+            Property sortProp = buildSortProp(elem.getGlobalIdentifier());
+            if (sortProp != null) {
+                control.addProp(sortProp);
+            }
+
+            return control;
+        })
+        .sorted(Comparator.comparing(Control::getId))
         .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
