@@ -172,6 +172,15 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
             // Subcategory parts - about (guidance), documentation (guidance), resource (reference for documentation guidance), reference, suggested action (statement and item parts)
 
+            // AI RMF suggested actions -> OSCAL statement and items
+            // Reasoning: "The suggestions are provided in an attempt to make the AI RMF more actionable in the pursuit of delivering trustworthy and responsible AI systems." (NIST AI RMF Playbook)
+            ControlPart statementPart = new ControlPart();
+            statementPart.setId("SA-" + elem.element_identifier.replaceAll(" ", "_"));
+            statementPart.setName("statement");
+            statementPart.setClazz(SUGGESTED_ACTION_ELEMENT_TYPE);
+            statementPart.setParts(createSuggestedActionStatementItems(elem.getGlobalIdentifier()));
+            parts.add(statementPart);
+
             // AI RMF about -> OSCAL guidance
             // Reasoning: About element represents lengthy prose that is descriptive about the subcategory
             parts.addAll(createGuidancePart(elem.getGlobalIdentifier(), ABOUT_ELEMENT_TYPE));
@@ -220,6 +229,14 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             ControlPart guidancePart = buildPartFromElementText(elem, "guidance");
             guidancePart.setClazz(elemType);
             return guidancePart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private List<ControlPart> createSuggestedActionStatementItems(String parentId) {
+        return getRelatedElementsBySourceIdWithType(parentId, SUGGESTED_ACTION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart itemPart = buildPartFromElementText(elem, "item");
+            itemPart.setClazz(SUGGESTED_ACTION_ELEMENT_TYPE);
+            return itemPart;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
