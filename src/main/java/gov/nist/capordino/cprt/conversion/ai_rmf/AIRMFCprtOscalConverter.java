@@ -172,6 +172,22 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
             // Subcategory parts - about (guidance), documentation (guidance), resource (reference for documentation guidance), reference, suggested action (statement and item parts)
 
+            // AI RMF about -> OSCAL guidance
+            // Reasoning: About element represents lengthy prose that is descriptive about the subcategory
+            parts.addAll(createGuidancePart(elem.getGlobalIdentifier(), ABOUT_ELEMENT_TYPE));
+
+            // AI RMF documentation -> OSCAL guidance
+            // Reasoning: "Transparency guidance can be used by organizations to document their AI risk management activities." (NIST AI RMF Playbook)
+            // There is no overall documentation element. Subcategory is linked to multiple documentation elements. Need to create an overall documentation element for best practice nested structure.
+            List<ControlPart> documentationParts = createGuidancePart(elem.getGlobalIdentifier(), DOCUMENTATION_ELEMENT_TYPE);
+            ControlPart documentationPart = new ControlPart();
+            documentationPart.setId("D-" + elem.element_identifier.replaceAll(" ", "_"));
+            documentationPart.setName("guidance");
+            documentationPart.setClazz(DOCUMENTATION_ELEMENT_TYPE);
+            documentationPart.setProse(MarkupMultiline.fromMarkdown("Organizations can document the following"));
+            documentationPart.setParts(documentationParts);
+            parts.add(documentationPart);
+
             
             control.setParts(parts);
 
@@ -197,5 +213,13 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
         ControlPart overviewPart = buildPartFromElementText(elem, "overview");
         overviewPart.setId(overviewPart.getId() + "_ovw");
         return overviewPart;
+    }
+
+    private List<ControlPart> createGuidancePart(String parentId, String elemType) {
+        return getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            ControlPart guidancePart = buildPartFromElementText(elem, "guidance");
+            guidancePart.setClazz(elemType);
+            return guidancePart;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
