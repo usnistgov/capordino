@@ -62,7 +62,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
-        elementProse.setId(element.element_identifier + "_" + name);
+        elementProse.setId(element.element_identifier.replaceAll(" ", "_") + "_" + name);
         elementProse.setName(name);
         elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
         return elementProse;
@@ -128,7 +128,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
         return getRelatedElementsBySourceIdWithType(parentId, CATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             // For each AI RMF category, create an OSCAL group
             CatalogGroup group = new CatalogGroup();
-            group.setId(elem.element_identifier);
+            group.setId(elem.element_identifier.replaceAll(" ", "_"));
             group.setClazz(elem.element_type);
             group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
@@ -161,7 +161,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
     private List<Control> buildSubcategoryControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, SUBCATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
-            control.setId(elem.element_identifier);
+            control.setId(elem.element_identifier.replaceAll(" ", "_"));
             control.setClazz(elem.element_type);
 
             control.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
