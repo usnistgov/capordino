@@ -109,7 +109,16 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
                 }
 
                 return group;
-            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+            })
+            .sorted(Comparator.comparing(group -> 
+                group.getProps().stream()
+                    // Get the sort-id prop
+                    .filter(prop -> prop.getName().equals("sort-id"))
+                    // Compare based on value of sort-id like "00001"
+                    .map(Property::getValue)
+                    .findFirst().orElse("")
+            ))
+            .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     /**
@@ -135,7 +144,14 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
             return group;
         })
-        .sorted(Comparator.comparing(CatalogGroup::getId))
+        .sorted(Comparator.comparing(group -> 
+            group.getProps().stream()
+                // Get the sort-id prop
+                .filter(prop -> prop.getName().equals("sort-id"))
+                // Compare based on value of sort-id like "00001"
+                .map(Property::getValue)
+                .findFirst().orElse("")
+        ))
         .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
@@ -167,7 +183,14 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
             return control;
         })
-        .sorted(Comparator.comparing(Control::getId))
+        .sorted(Comparator.comparing(control -> 
+            control.getProps().stream()
+                // Get the sort-id prop
+                .filter(prop -> prop.getName().equals("sort-id"))
+                // Compare based on value of sort-id like "00001"
+                .map(Property::getValue)
+                .findFirst().orElse("")
+        ))
         .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
