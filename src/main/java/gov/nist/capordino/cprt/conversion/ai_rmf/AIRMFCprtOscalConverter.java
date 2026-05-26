@@ -62,7 +62,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name) {
         ControlPart elementProse = new ControlPart();
-        elementProse.setId(element.element_identifier.replaceAll(" ", "_") + "_" + name);
+        elementProse.setId(element.element_identifier.replaceAll(" ", "_"));
         elementProse.setName(name);
         elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
         return elementProse;
@@ -99,7 +99,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
-                group.addPart(buildPartFromElementText(elem, "overview"));
+                group.addPart(createOverviewPart(elem));
                 // For AI RMF category, create an OSCAL group
                 group.setGroups(buildCategoryGroups(catalog, elem.getGlobalIdentifier()));
 
@@ -132,7 +132,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             group.setClazz(elem.element_type);
             group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
-            group.addPart(buildPartFromElementText(elem, "overview"));
+            group.addPart(createOverviewPart(elem));
 
             // For AI RMF subcategory, create an OSCAL control
             group.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
@@ -168,10 +168,9 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
             List<ControlPart> parts = new ArrayList<ControlPart>();
 
-            ControlPart statementPart = buildPartFromElementText(elem, "statement");
-            parts.add(statementPart);
-            // Subcategory parts - about, documentation, resource, reference, suggested action
+            parts.add(createOverviewPart(elem));
 
+            // Subcategory parts - about (guidance), documentation (guidance), resource (reference for documentation guidance), reference, suggested action (statement and item parts)
 
             
             control.setParts(parts);
@@ -192,5 +191,11 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
                 .findFirst().orElse("")
         ))
         .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    private ControlPart createOverviewPart(CprtElement elem) {
+        ControlPart overviewPart = buildPartFromElementText(elem, "overview");
+        overviewPart.setId(overviewPart.getId() + "_ovw");
+        return overviewPart;
     }
 }
