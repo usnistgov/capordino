@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -13,6 +15,7 @@ import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupLine;
 import gov.nist.secauto.metaschema.model.common.datatype.markup.MarkupMultiline;
+import gov.nist.secauto.oscal.lib.model.BackMatter.Resource;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
@@ -54,6 +57,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
 
+    private Map<String, Link> createdReferences = new HashMap<String, Link>();
 
     @Override
     protected void hydrateCatalog(Catalog catalog) {
@@ -189,16 +193,24 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             // Reasoning: "Transparency guidance can be used by organizations to document their AI risk management activities." (NIST AI RMF Playbook)
             // There is no overall documentation element. Subcategory is linked to multiple documentation elements. Need to create an overall documentation element for best practice nested structure.
             List<ControlPart> documentationParts = createGuidancePart(elem.getGlobalIdentifier(), DOCUMENTATION_ELEMENT_TYPE);
-            ControlPart documentationPart = new ControlPart();
-            documentationPart.setId("D-" + elem.element_identifier.replaceAll(" ", "_"));
-            documentationPart.setName("guidance");
-            documentationPart.setClazz(DOCUMENTATION_ELEMENT_TYPE);
-            documentationPart.setProse(MarkupMultiline.fromMarkdown("Organizations can document the following"));
-            documentationPart.setParts(documentationParts);
-            parts.add(documentationPart);
-
+            // ControlPart documentationPart = new ControlPart();
+            // documentationPart.setId("D-" + elem.element_identifier.replaceAll(" ", "_"));
+            // documentationPart.setName("guidance");
+            // documentationPart.setClazz(DOCUMENTATION_ELEMENT_TYPE);
+            // documentationPart.setProse(MarkupMultiline.fromMarkdown("Organizations can document the following"));
+            // documentationPart.setParts(documentationParts);
+            // parts.add(documentationPart);
+            parts.addAll(documentationParts);
             
             control.setParts(parts);
+
+            List<Link> links = new ArrayList<Link>();
+            // AI RMF resource -> OSCAL link
+            // Reasoning: "Suggested references for additional reading are intended to serve as a sampling from the available literature on the given topic or subtopic area." (AI RMF Playbook)
+            links.addAll(createReferenceLinks(catalog, elem.getGlobalIdentifier(), RESOURCE_ELEMENT_TYPE));
+            links.addAll(createReferenceLinks(catalog, elem.getGlobalIdentifier(), REFERENCE_ELEMENT_TYPE));
+            
+            control.setLinks(links);
 
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
             if (sortProp != null) {
@@ -238,5 +250,24 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             itemPart.setClazz(SUGGESTED_ACTION_ELEMENT_TYPE);
             return itemPart;
         }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+    }
+
+    // Build RLinks to references, represented in AI RMF as resources/references (resource/reference element type, projection relationship type)
+    private List<Link> createReferenceLinks(Catalog catalog, String parentId, String elemType) {
+         return getRelatedElementsBySourceIdWithType(parentId, elemType, PROJECTION_RELATIONSHIP_TYPE)
+            .map(elem -> {
+                if (! createdReferences.containsKey(elem.title)) {
+                    Resource resource = buildResource(elem);
+                    resource.setTitle(MarkupLine.fromMarkdown(removeSquareBrackets(elem.title)));
+                    resource.setCitation(null); // Remove default citation
+                    Link link = newLinkRel(catalog, resource, elemType);
+                    createdReferences.put(elem.title, link);
+                    return link;
+                }
+                else {
+                    return createdReferences.get(elem.title);
+                }
+            // if exists, link to already existing reference, have a hashmap of identifier and resource object
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 }
