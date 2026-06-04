@@ -105,7 +105,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
 
                 group.addPart(createOverviewPart(elem));
                 // For AI RMF category, create an OSCAL group
-                group.setGroups(buildCategoryGroups(catalog, elem.getGlobalIdentifier()));
+                group.setControls(buildCategoryControls(catalog, elem.getGlobalIdentifier()));
 
                 Property sortProp = buildSortProp(elem.getGlobalIdentifier());
                 if (sortProp != null) {
@@ -126,30 +126,32 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
     }
 
     /**
-     * Build the second level group of the catalog, represented in AI RMF as categories.
+     * Build the parent controls of the catalog, represented in AI RMF as categories.
      */
-    private List<CatalogGroup> buildCategoryGroups(Catalog catalog, String parentId) {
+    private List<Control> buildCategoryControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, CATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
-            // For each AI RMF category, create an OSCAL group
-            CatalogGroup group = new CatalogGroup();
-            group.setId(elem.element_identifier.replaceAll(" ", "_"));
-            group.setClazz(elem.element_type);
-            group.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
+            // For each AI RMF category, create an OSCAL control
+            Control control = new Control();
+            control.setId(elem.element_identifier.replaceAll(" ", "_"));
+            control.setClazz(elem.element_type);
+            control.setTitle(MarkupLine.fromMarkdown(elem.element_identifier));
 
-            group.addPart(createOverviewPart(elem));
+            ControlPart statementPart = buildPartFromElementText(elem, "statement");
+            statementPart.setId(statementPart.getId() + "_smt");
+            control.addPart(statementPart);
 
             // For AI RMF subcategory, create an OSCAL control
-            group.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
+            control.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
            
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
             if (sortProp != null) {
-                group.addProp(sortProp);
+                control.addProp(sortProp);
             }
 
-            return group;
+            return control;
         })
-        .sorted(Comparator.comparing(group -> 
-            group.getProps().stream()
+        .sorted(Comparator.comparing(control -> 
+            control.getProps().stream()
                 // Get the sort-id prop
                 .filter(prop -> prop.getName().equals("sort-id"))
                 // Compare based on value of sort-id like "00001"
@@ -179,7 +181,7 @@ public class AIRMFCprtOscalConverter extends AbstractOscalConverter {
             // AI RMF suggested actions -> OSCAL statement and items
             // Reasoning: "The suggestions are provided in an attempt to make the AI RMF more actionable in the pursuit of delivering trustworthy and responsible AI systems." (NIST AI RMF Playbook)
             ControlPart statementPart = new ControlPart();
-            statementPart.setId("SA-" + elem.element_identifier.replaceAll(" ", "_"));
+            statementPart.setId("SA-" + elem.element_identifier.replaceAll(" ", "_")); // Set id to match CPRT
             statementPart.setName("statement");
             statementPart.setClazz(SUGGESTED_ACTION_ELEMENT_TYPE);
             statementPart.setParts(createSuggestedActionStatementItems(elem.getGlobalIdentifier()));
