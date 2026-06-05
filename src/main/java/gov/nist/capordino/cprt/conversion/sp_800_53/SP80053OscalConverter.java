@@ -4,7 +4,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.LinkedHashSet;
 import java.util.regex.Matcher;
@@ -92,6 +95,8 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
     private final String EXAMINE_PREFIX = "E-";
     private final String INTERVIEW_PREFIX = "I-";
     private final String TEST_PREFIX = "T-";
+
+    private Map<String, String> aggregateParamsMap = new HashMap<String, String>(); // Map a param to its aggregate param
 
     /**
      * The URI to use for CSF-specific props.
@@ -183,7 +188,7 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
                 // If not withdrawn, build a statement part
                 else {
                     // ODPs, assignment parameters
-                    // control.setParams(createParams(elem));
+                    control.setParams(createParams(elem));
 
                     // Use topControlStatement instead of elem to skip one level in the tree
                     // If this is not done, it creates an extra ControlPart level in the catalog
@@ -430,13 +435,15 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
         // Then get all ODPs in the assessment objective
         String parentId = parent.element_identifier;
         List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
-            return get_odp_identifiers(elem.text, "<(.+?) .+?>");
+            return get_odp_identifiers(elem.text, "<(.+?):?\\s+.+?>");
         }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
+
+        String parent_doc_identifier = parent.doc_identifier;
 
         // ODPs within ODPs
         List<String> additional_odps = new ArrayList<String>();
         for (String odp_identifier : odp_identifiers) {
-            String odp_global_identifier = parent.doc_identifier + ":" + odp_identifier;
+            String odp_global_identifier = parent_doc_identifier + ":" + odp_identifier;
             
             List<String> odps_within_odp = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
                 return elem.element_identifier;
@@ -448,11 +455,70 @@ public class SP80053OscalConverter extends AbstractOscalConverter {
 
         // LinkedHashSet to keep order and account for same ODPs in different objectives
         Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
-
-        List<Parameter> odp_params = buildParams(parent.doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE);
-
+        List<Parameter> odp_params = buildAggregateParams(odp_identifiers_set, parentId, parent_doc_identifier);
+        odp_params.addAll(buildParams(parent_doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE));
+        
         
         return odp_params;
+    }
+
+    protected List<Parameter> buildAggregateParams(Set<String> odp_identifiers, String parentId, String docIdentifier) {
+        List<Parameter> aggregateParams = new ArrayList<Parameter>();
+
+        Map<String, List<CprtElement>> odpStatementMatches = new LinkedHashMap<String, List<CprtElement>>();
+        // build a hashmap with key odp statement and value list of odps that have that statement
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = docIdentifier + ":" + odp_identifier;
+            // Get the ODP element associated with the ODP id
+            CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+            // Get the ODP statement element associated with this ODP
+            CprtElement odp_statement_element = cprtRoot.getElementById(docIdentifier + ":OS-" + odp_identifier.toLowerCase());
+
+            if (odp_element == null || odp_statement_element == null) {
+                System.out.println(odp_global_identifier);
+                continue;
+            }
+
+            String odpStatement = odp_statement_element.text;
+
+            if (odpStatementMatches.containsKey(odpStatement)) {
+                // Also check if ODP title is contained in odp statement (protects against CPRT bug where unrelated ODPs have same statement)
+                if (odpStatement.contains(odp_element.title)) {
+                    odpStatementMatches.get(odpStatement).add(odp_element);
+                }
+            } else {
+                List<CprtElement> odpMatches = new ArrayList<CprtElement>();
+                odpMatches.add(odp_element);
+                odpStatementMatches.put(odpStatement, odpMatches);
+            }
+        }
+
+        int prmId = 1;
+        // build an aggregate param for each pair in the hashmap, only if there are multiple ODPs that match to same statement
+        for (Map.Entry<String, List<CprtElement>> entry : odpStatementMatches.entrySet()) {
+            String odpStatement = entry.getKey();
+            List<CprtElement> odpMatches = entry.getValue();
+
+            if (odpMatches.size() > 1) {
+                // Create an aggregate param for ODPs that share the same statement
+                Parameter aggregateParam = new Parameter();
+
+                aggregateParam.setId(parentId + "_prm_" + prmId);
+                prmId++;
+
+                for (CprtElement odpMatch : odpMatches) {
+                    String odp_identifier = odpMatch.element_identifier;
+                    aggregateParam.addProp(buildProp("aggregates", odp_identifier, "http://csrc.nist.gov/ns/rmf"));
+
+                    aggregateParamsMap.put(odp_identifier, aggregateParam.getId());
+                }
+                aggregateParam.setLabel(createMarkupLineEscaped(odpStatement));
+
+                aggregateParams.add(aggregateParam);
+            }
+        }
+
+        return aggregateParams;
     }
 
     // @Override
