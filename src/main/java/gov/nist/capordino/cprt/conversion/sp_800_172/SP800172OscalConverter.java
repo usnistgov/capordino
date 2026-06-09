@@ -3,10 +3,16 @@ package gov.nist.capordino.cprt.conversion.sp_800_172;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
@@ -22,6 +28,9 @@ import gov.nist.secauto.oscal.lib.model.CatalogGroup;
 import gov.nist.secauto.oscal.lib.model.Control;
 import gov.nist.secauto.oscal.lib.model.ControlPart;
 import gov.nist.secauto.oscal.lib.model.Link;
+import gov.nist.secauto.oscal.lib.model.Parameter;
+import gov.nist.secauto.oscal.lib.model.ParameterGuideline;
+import gov.nist.secauto.oscal.lib.model.ParameterSelection;
 import gov.nist.secauto.oscal.lib.model.Property;
 
 public class SP800172OscalConverter extends AbstractOscalConverter {
@@ -59,6 +68,13 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
     private final String SORT_ELEMENT_TYPE = "sort";
     private final String TACTIC_ELEMENT_TYPE = "tactic";
 
+    private final String DETERMINATION_ELEMENT_TYPE = "determination";
+    private final String EXAMINE_ELEMENT_TYPE = "examine";
+    private final String INTERVIEW_ELEMENT_TYPE = "interview";
+    private final String TEST_ELEMENT_TYPE = "test";
+    private final String ODP_ELEMENT_TYPE = "odp";
+    private final String ODP_STATEMENT_ELEMENT_TYPE = "odp_statement";
+    private final String ODP_TYPE_ELEMENT_TYPE = "odp_type";
 
     private final String PROJECTION_RELATIONSHIP_TYPE = "projection";
     private final String EXTERNAL_REFERENCE_RELATIONSHIP_TYPE = "external_reference";
@@ -103,7 +119,34 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
                 return group;
             })
-            .sorted(Comparator.comparing(CatalogGroup::getId))
+            // Sort based on group id
+            // .sorted(Comparator.comparing(CatalogGroup::getId, (id1, id2) -> {
+            //     // IDs are Strings but the last part should be numerically compared to be in correct order: 3.1, 3.2, 3.11
+            //     String[] idPrefix1 = id1.split("\\.");
+            //     String[] idPrefix2 = id2.split("\\.");
+
+            //     if (idPrefix1.length < 2 || idPrefix2.length < 2) {
+            //         return id1.compareTo(id2);
+            //     }
+
+            //     // First, string-compare the IDs
+            //     int comparePrefix = idPrefix1[0].compareTo(idPrefix2[0]);
+
+            //     // If prefix are same, numerically compare the last part
+            //     if (comparePrefix == 0) {
+            //         return Integer.compare(Integer.parseInt(idPrefix1[1]), Integer.parseInt(idPrefix2[1]));
+            //     }
+
+            //     return comparePrefix;
+            // }))
+            .sorted(Comparator.comparing(group -> 
+                group.getProps().stream()
+                    // Get the sort-id prop
+                    .filter(prop -> prop.getName().equals("sort-id"))
+                    // Compare based on value of sort-id like "00001"
+                    .map(Property::getValue)
+                    .findFirst().orElse("")
+            ))
             .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
@@ -153,6 +196,9 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
                 control.addProp(p);
             }
 
+            // ODPs, assignment parameters
+            control.setParams(createParams(elem));
+
             List<ControlPart> parts = new ArrayList<ControlPart>();
             ControlPart statementPart = buildPartFromElementText(elem, "statement");
             statementPart.setId("SP_800_172_" + elem.element_identifier + "_smt"); 
@@ -162,6 +208,11 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
             parts.addAll(createGuidancePart(catalog, elem.getGlobalIdentifier()));
             parts.addAll(createAdversaryEffectParts(catalog, elem.getGlobalIdentifier(), ADVERSARY_EFFECT_ELEMENT_TYPE));
 
+            // Assessment objectives
+            parts.addAll(createAssessmentObjectiveParts(catalog, elem.element_identifier));
+
+            // Assessment methods and objects
+            parts.addAll(createAssessmentMethodParts(catalog, elem.getGlobalIdentifier()));
             
             control.setParts(parts);
 
@@ -317,5 +368,229 @@ public class SP800172OscalConverter extends AbstractOscalConverter {
 
         return source_controls_links;
     }
+
+    private List<ControlPart> createAssessmentObjectiveParts(Catalog catalog, String parentId) {
+        List<ControlPart> objective_parts = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            ControlPart part =  buildAssessmentObjectivePart(elem);
+            return part;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        return objective_parts;
+    }
    
+    // Assessment methods are EXAMINE, INTERVIEW, TEST
+    private List<ControlPart> createAssessmentMethodParts(Catalog catalog, String parentId) {
+        parentId = parentId.replaceAll("800_172", "800_172A");
+
+        ArrayList<ControlPart> examine_parts = getRelatedElementsBySourceIdWithType(parentId, EXAMINE_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> interview_parts = getRelatedElementsBySourceIdWithType(parentId, INTERVIEW_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        ArrayList<ControlPart> test_parts = getRelatedElementsBySourceIdWithType(parentId, TEST_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return buildAssessmentMethodPart(elem, ";", "[SELECT FROM: ", "]", "http://csrc.nist.gov/ns/rmf");
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        examine_parts.addAll(interview_parts);
+        examine_parts.addAll(test_parts);
+
+        return examine_parts;
+    }
+
+    private List<Parameter> createParams(CprtElement parent) {
+        // Get all assessment objectives associated with this control
+        // Then get all ODPs in the assessment objective
+        String parentId = parent.element_identifier;
+        List<String> odp_identifiers = getRelatedElementsByType(DETERMINATION_ELEMENT_TYPE, parentId).map(elem -> {
+            return get_odp_identifiers(elem.text, "<(.+?) .+?>");
+        }).collect(ArrayList::new, ArrayList::addAll, ArrayList::addAll); // Flatten the list of param lists
+
+        String parent_doc_identifier = parent.doc_identifier.replaceAll("800_172", "800_172A");
+
+        // ODPs within ODPs
+        List<String> additional_odps = new ArrayList<String>();
+        for (String odp_identifier : odp_identifiers) {
+            String odp_global_identifier = parent_doc_identifier + ":" + odp_identifier;
+            
+            List<String> odps_within_odp = getRelatedElementsBySourceIdWithType(odp_global_identifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem.element_identifier;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            additional_odps.addAll(odps_within_odp);
+        }
+        odp_identifiers.addAll(additional_odps);
+
+        // LinkedHashSet to keep order and account for same ODPs in different objectives
+        Set<String> odp_identifiers_set = new LinkedHashSet<String>(odp_identifiers);
+        List<Parameter> odp_params = buildParams(parent_doc_identifier, odp_identifiers_set, ODP_TYPE_ELEMENT_TYPE);
+
+        
+        return odp_params;
+    }
+
+    @Override
+    // Builds a OSCAL Param for a given ODP id
+    protected Parameter buildParam(String odp_identifier, String doc_identifier, String odp_type_element_type) {
+        // Convert to global identifier, because of how elements map stores elements
+        String odp_global_identifier = doc_identifier + ":" + odp_identifier;
+
+        // Get the ODP element associated with the ODP id
+        CprtElement odp_element = cprtRoot.getElementById(odp_global_identifier);
+        // Get the ODP statement element associated with this ODP
+        CprtElement odp_statement_element = cprtRoot.getElementById(doc_identifier + ":" + "OS-" + odp_identifier);
+
+        // Create a Parameter object
+        Parameter odp_param = new Parameter();
+        odp_param.addProp(buildLabelProp(odp_identifier));
+        odp_param.setLabel(createMarkupLineEscaped(odp_element.title));
+
+        // Build param based on type
+        List<String> odp_types = getRelatedElementsBySourceIdWithType(odp_global_identifier, odp_type_element_type).map(elem -> {
+            return elem.element_identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        String odp_type = odp_types.get(0);
+        if (odp_type == null) {
+            throw new IllegalArgumentException("ODP " + odp_global_identifier + "has no ODP type");
+        }
+        
+        if (odp_type.equals("single_entry")) {
+            // Assignment type param
+            ParameterGuideline odp_param_guideline = new ParameterGuideline();
+            odp_param_guideline.setProse(createMarkupMultilineEscaped(odp_element.text));
+            odp_param.addGuideline(odp_param_guideline);
+
+            if (odp_statement_element != null) {
+                odp_param.setUsage(createMarkupMultilineEscaped(odp_statement_element.text));
+            }
+        }
+        else {
+            // Selection type param
+            ParameterSelection odp_param_selection = new ParameterSelection();
+            if (odp_type.equals("multi_select")) {
+                odp_param_selection.setHowMany("one-or-more");
+            }
+            else if (odp_type.equals("single_select")) {
+                odp_param_selection.setHowMany("one");
+            }
+            
+
+            List<String> odp_param_choices = parseParamChoices(odp_statement_element.text, odp_element.text, odp_global_identifier);
+
+            for (String choice : odp_param_choices) {
+                odp_param_selection.addChoice(createMarkupLineEscaped(choice));
+            }
+            odp_param.setSelect(odp_param_selection);
+        }
+        
+        // Param id must be escaped to be consistent with how params are inserted in controls and assessment objectives, which require escaped square brackets
+        // String escaped_odp_identifier = escapeSquareBracketsWithParentheses(odp_identifier);
+        String escaped_odp_identifier = escapeSquareBracketsWithPeriods(odp_identifier);
+        odp_param.setId("SP_800_172_" + escaped_odp_identifier);
+
+        return odp_param;
+    }
+
+    @Override
+    protected String parseODPInElementText(CprtElement element) {
+        String text = element.text;
+
+        // ODPs in controls are implicit. Get the assessment objectives related to this control, because ODPS are explicitly stated in assessment objectives.
+        List<CprtElement> related_assessment_objectives = getRelatedElementsBySourceIdWithType(element.getGlobalIdentifier().replaceAll("800_172", "800_172A"), DETERMINATION_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        Set<CprtElement> all_related_odps = new LinkedHashSet<CprtElement>();
+
+        // For the assessment objectives related to this control, get the related ODP(s)
+        for (CprtElement related_assessment_objective : related_assessment_objectives) {
+            
+            List<CprtElement> related_odps = getRelatedElementsBySourceIdWithType(related_assessment_objective.getGlobalIdentifier(), ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+            all_related_odps.addAll(related_odps);
+        }
+
+        // Replaced implicitly stated ODP with <insert odp_id>
+        if (!all_related_odps.isEmpty()) {
+            text = insertImplicitParamsWithElements(text, new ArrayList<CprtElement>(all_related_odps));
+        }
+        
+        return text;
+    }
+
+
+    // Replace <ODP_id> with <insert> in text
+    // Use when ODP id is explicitly stated: asssessment objective
+    @Override
+    protected String insertExplicitParams(String text) {
+        List<String> odp_identifiers = get_odp_identifiers(text, "<(.+?) .+?>");
+        
+        // Replace ODP with insert param
+        for (String odp_identifier : odp_identifiers) {
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", "SP_800_172_" + odp_identifier) ;
+            String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
+
+            // Only replace the ODP that matches this identifier
+            String specific_odp_pattern = "<" + escaped_odp_identifier + " .+?>"; 
+            text = text.replaceAll(specific_odp_pattern, insert);
+        }
+
+        return text;
+    }
+
+    
+    // Replace [Selection: ...] or [Assignment: ...] with <insert> in text
+    // Use when ODP id is implicit: control items, ODP contained inside another ODP
+    protected String insertImplicitParamsWithElements(String text, List<CprtElement> related_odps) {
+        // After Selection (one or more): can't use greedy regex that matches everything up to the last ] of the text.
+        // The last ] of the text is not necessarily the closing bracket of the selection block. It may be another assignment/selection block that comes after.
+        // For all text that comes after selection block, match to two possible options
+        // 1. Any character that isn't a [ or ]
+        // 2. If character is [, then match up to the next encountered ]
+        // This captures assignment blocks within selection blocks, and stops if it encounters a ] without a [ that comes before. This signals the end of the selection block.
+        // NOTE: Assumes maximum of 1 nested level. No assignment blocks within a selection block within a selection block.
+
+        String odp_multi_select_pattern = "(\\[Selection:?\\s+\\(one or more\\):\\s+(?:[^\\[\\]]|\\[[^\\]]*\\])+\\])";
+        // Need non-greedy regex for minimum possible match, otherwise it matches multiple ODPs as one.
+        String odp_assign_pattern = "(\\[Assignment:\\s+.+?\\])";
+
+        // Replace ODP with insert param
+        // NOTE: assumes ODPs are non-repeating and in order in the text
+        for (CprtElement related_odp : related_odps) {
+            String odp_identifier = related_odp.element_identifier;
+            String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", "SP_800_172_" + odp_identifier) ;
+
+            // replaceFirst instead of replaceAll, because there may be multiple assignments that match due to same ODP statement, yet are different ODPs
+            // Match multi select pattern first, so any "assignment" type param within "select" type param are incorporated
+            Pattern multi_select_pattern = Pattern.compile(odp_multi_select_pattern);
+            Matcher multi_select_matcher = multi_select_pattern.matcher(text);
+            
+            // Replace either a select or assignment pattern
+            if (multi_select_matcher.find()) {
+                text = text.replaceFirst(odp_multi_select_pattern, insert);
+            }
+            else {
+                text = text.replaceFirst(odp_assign_pattern, insert);
+            }
+        }
+
+        return text;
+    }
+
+    // Parse choices in a multi_select type ODP
+    protected List<String> parseParamChoices(String odp_statement_text, String odp_text, String topLevelODPIdentifier) {
+        // For multi_select ODPs, choices are in odp_statement_text but nested ODP ids are NOT in odp_text, as in 800-171. Find the assignment ODPs that have relationships with the top level selection ODP.
+        List<String> nested_odps = getRelatedElementsBySourceIdWithType(topLevelODPIdentifier, ODP_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
+            return elem.element_identifier;
+        }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+
+        String choices = insertImplicitParams(odp_statement_text, nested_odps);
+        String[] choices_list = choices.split(";");
+
+        return Arrays.asList(choices_list);
+    }
 }
