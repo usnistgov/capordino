@@ -51,6 +51,7 @@ public abstract class AbstractOscalConverter {
      * The URI to use for CPRT-specific props.
      */
     private final URI CPRT_URI = URI.create("https://csrc.nist.gov/ns/cprt");
+    private final String CPRT_URL = "https://csrc.nist.gov/projects/cprt";
 
     public AbstractOscalConverter(CprtMetadataVersion cprtMetadataVersion, CprtRoot cprtRoot) {
         this.cprtMetadataVersion = cprtMetadataVersion;
@@ -144,7 +145,7 @@ public abstract class AbstractOscalConverter {
         return link;
     }
 
-    private Party buildPublisherParty() {
+    private Party buildCreatorParty() {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
         party.setName("National Institute of Standards and Technology");
@@ -153,7 +154,7 @@ public abstract class AbstractOscalConverter {
 
         Address address = new Address();
         address.addAddrLine("National Institute of Standards and Technology");
-        address.addAddrLine("Attn: Applied Cybersecurity Division");
+        address.addAddrLine("Attn: Computer Security Division");
         address.addAddrLine("Information Technology Laboratory");
         address.addAddrLine("100 Bureau Drive (Mail Stop 2000)");
         address.setCity("Gaithersburg");
@@ -165,7 +166,7 @@ public abstract class AbstractOscalConverter {
         return party;
     }
 
-    private Party buildAuthorParty() {
+    private Party buildPublisherParty() {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
         party.setType("organization");
@@ -176,11 +177,11 @@ public abstract class AbstractOscalConverter {
 
     private Metadata buildMetadata(@Nonnull Catalog catalog) {
         Metadata metadata = new Metadata();
-        metadata.setOscalVersion("v1.1.2");
+        metadata.setOscalVersion("v1.1.3");
         metadata.setLastModified(ZonedDateTime.now());
         
         metadata.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
-        metadata.setVersion(cprtMetadataVersion.version);
+        metadata.setVersion("1.0.0"); // 1.0.0 as OSCAL document version, don't use cprt version
         
         metadata.addProp(newCprtProp("framework-identifier", cprtMetadataVersion.frameworkIdentifier));
         metadata.addProp(newCprtProp("framework-version-identifier", cprtMetadataVersion.frameworkVersionIdentifier));
@@ -191,7 +192,9 @@ public abstract class AbstractOscalConverter {
             metadata.addProp(newCprtProp("publication-status", cprtMetadataVersion.publicationStatus));
         }
 
-        metadata.setPublished(dateToZonedDateTime(cprtMetadataVersion.publicationReleaseDate));
+        // According to the OSCAL Reference: "the published value should indicate when the OSCAL document instance was last published, not the source material."
+        // metadata.setPublished(dateToZonedDateTime(cprtMetadataVersion.publicationReleaseDate));
+        metadata.setPublished(ZonedDateTime.now());
 
         // Add website link
         Resource frameworkLinkResource = new Resource();
@@ -212,43 +215,53 @@ public abstract class AbstractOscalConverter {
             metadata.addLink(newLinkRel(catalog, frameworkVersionLinkResource, "canonical"));
         }
 
+        // Add CPRT link
+        Resource cprtResource = new Resource();
+        cprtResource.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
+        Rlink cprtWebsiteRlink = new Rlink();
+        cprtWebsiteRlink.setHref(URI.create(CPRT_URL));
+        cprtWebsiteRlink.setMediaType("application/html");
+        cprtResource.addRlink(cprtWebsiteRlink);
+        metadata.addLink(newLinkRel(catalog, cprtResource, "cprt"));
+
+
         // Add party information
-        Party publisherParty = buildPublisherParty();
-        metadata.addParty(publisherParty);
+        Party creatorParty = buildCreatorParty();
+        metadata.addParty(creatorParty);
 
-        Role publisherRole = new Role();
-        publisherRole.setId("publisher");
-        publisherRole.setTitle(MarkupLine.fromMarkdown("Publisher"));
-        metadata.addRole(publisherRole);
+        Role creatorRole = new Role();
+        creatorRole.setId("creator");
+        creatorRole.setTitle(MarkupLine.fromMarkdown("Document creator"));
+        metadata.addRole(creatorRole);
 
-        ResponsibleParty publisherResponsibleParty = new ResponsibleParty();
-        publisherResponsibleParty.setRoleId(publisherRole.getId());
-        publisherResponsibleParty.addPartyUuid(publisherParty.getUuid());
-        metadata.addResponsibleParty(publisherResponsibleParty);
-
-        Role contactRole = new Role();
-        contactRole.setId("contact");
-        contactRole.setTitle(MarkupLine.fromMarkdown("Contact"));
-        metadata.addRole(contactRole);
-
-        ResponsibleParty contactResponsibleParty = new ResponsibleParty();
-        contactResponsibleParty.setRoleId(contactRole.getId());
-        contactResponsibleParty.addPartyUuid(publisherParty.getUuid());
-        metadata.addResponsibleParty(contactResponsibleParty);
+        ResponsibleParty creatorResponsibleParty = new ResponsibleParty();
+        creatorResponsibleParty.setRoleId(creatorRole.getId());
+        creatorResponsibleParty.addPartyUuid(creatorParty.getUuid());
+        metadata.addResponsibleParty(creatorResponsibleParty);
 
         if (cprtMetadataVersion.pocEmailAddress != null && !cprtMetadataVersion.pocEmailAddress.isEmpty()) {
-            Party authorParty = buildAuthorParty();
-            metadata.addParty(authorParty);
+            Party publisherParty = buildPublisherParty();
+            metadata.addParty(publisherParty);
     
-            Role authorRole = new Role();
-            authorRole.setId("author");
-            authorRole.setTitle(MarkupLine.fromMarkdown("Author"));
-            metadata.addRole(authorRole);
+            Role publisherRole = new Role();
+            publisherRole.setId("publisher");
+            publisherRole.setTitle(MarkupLine.fromMarkdown("Publisher"));
+            metadata.addRole(publisherRole);
     
-            ResponsibleParty authorResponsibleParty = new ResponsibleParty();
-            authorResponsibleParty.setRoleId(authorRole.getId());
-            authorResponsibleParty.addPartyUuid(authorParty.getUuid());
-            metadata.addResponsibleParty(authorResponsibleParty);
+            ResponsibleParty publisherResponsibleParty = new ResponsibleParty();
+            publisherResponsibleParty.setRoleId(publisherRole.getId());
+            publisherResponsibleParty.addPartyUuid(publisherParty.getUuid());
+            metadata.addResponsibleParty(publisherResponsibleParty);
+
+            Role contactRole = new Role();
+            contactRole.setId("contact");
+            contactRole.setTitle(MarkupLine.fromMarkdown("Contact"));
+            metadata.addRole(contactRole);
+
+            ResponsibleParty contactResponsibleParty = new ResponsibleParty();
+            contactResponsibleParty.setRoleId(contactRole.getId());
+            contactResponsibleParty.addPartyUuid(publisherParty.getUuid());
+            metadata.addResponsibleParty(contactResponsibleParty);
         }
 
         return metadata;
@@ -327,7 +340,7 @@ public abstract class AbstractOscalConverter {
     }
 
     // Escape square brackets in input string, keep square brackets
-    protected String escapeSquareBrackets(String input) {
+    protected String escapeSquareBracketsWithBackslashes(String input) {
         return input.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]");
     }
 
@@ -365,7 +378,7 @@ public abstract class AbstractOscalConverter {
     }
 
     protected String parseODPInElementText(CprtElement element) {
-        return "";
+        return element.text;
     }
 
     protected ControlPart buildPartFromElementText(CprtElement element, String name, URI namespace) {
@@ -382,7 +395,7 @@ public abstract class AbstractOscalConverter {
         // Replace ODP with insert param
         for (String odp_identifier : odp_identifiers) {
             String insert = String.format("<insert type=\"param\" id-ref=\"%s\" />", odp_identifier) ;
-            String escaped_odp_identifier = escapeSquareBrackets(odp_identifier);
+            String escaped_odp_identifier = escapeSquareBracketsWithBackslashes(odp_identifier);
 
             // Only replace the ODP that matches this identifier
             String specific_odp_pattern = "<" + escaped_odp_identifier + ": .+?>"; 
@@ -579,7 +592,7 @@ public abstract class AbstractOscalConverter {
 
         // Publication information
         Citation citation = new Citation();
-        citation.setText(MarkupLine.fromMarkdown(element.title));
+        citation.setText(MarkupLine.fromMarkdown(escapeSquareBracketsWithBackslashes(element.title)));
         resource.setCitation(citation);
 
         // Link to publication
