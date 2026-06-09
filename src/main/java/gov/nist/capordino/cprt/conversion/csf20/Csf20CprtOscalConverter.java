@@ -63,7 +63,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
         ControlPart elementProse = new ControlPart();
         elementProse.setId(element.element_identifier + "_" + name);
         elementProse.setName(name);
-        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBrackets(element.text)));
+        elementProse.setProse(MarkupMultiline.fromMarkdown(escapeSquareBracketsWithParentheses(element.text)));
         return elementProse;
     }
 
@@ -80,12 +80,14 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
         return cprtRoot.getElements().stream()
             .filter(elem -> elem.element_type.equals(FUNCTION_ELEMENT_TYPE))
             .map(elem -> {
+                // For each CSF 2.0 function, create an OSCAL group
                 CatalogGroup group = new CatalogGroup();
                 group.setId(elem.element_identifier);
                 group.setClazz(elem.element_type);
                 group.setTitle(MarkupLine.fromMarkdown(elem.title));
 
                 group.addPart(buildPartFromElementText(elem, "overview"));
+                // For CSF 2.0 category, create an OSCAL control
                 group.setControls(buildCategoryControls(catalog, elem.getGlobalIdentifier()));
 
                 Property sortProp = buildSortProp(elem.getGlobalIdentifier());
@@ -102,6 +104,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
     /**
      * Build the second level group of the catalog, represented in CPRT as categories.
      */
+    // For CSF 2.0 category, create an OSCAL control
     private List<Control> buildCategoryControls(Catalog catalog, String parentId) {
         return getRelatedElementsBySourceIdWithType(parentId, CATEGORY_ELEMENT_TYPE, PROJECTION_RELATIONSHIP_TYPE).map(elem -> {
             Control control = new Control();
@@ -110,6 +113,7 @@ public class Csf20CprtOscalConverter extends AbstractOscalConverter {
             control.setTitle(MarkupLine.fromMarkdown(elem.title));
 
             control.addPart(buildPartFromElementText(elem, "statement"));
+            // For CSF 2.0 subcategory, create OSCAL subcontrol
             control.setControls(buildSubcategoryControls(catalog, elem.getGlobalIdentifier()));
 
             Property sortProp = buildSortProp(elem.getGlobalIdentifier());
