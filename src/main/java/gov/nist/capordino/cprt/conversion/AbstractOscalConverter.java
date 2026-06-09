@@ -383,6 +383,12 @@ public abstract class AbstractOscalConverter {
         return input.replaceAll("\\[", "").replaceAll("\\]", "");
     }
 
+    protected Property buildPropWithClass(String name, String value, String clazz) {
+        Property prop = buildProp(name, value);
+        prop.setClazz(clazz);
+        return prop;
+    }
+
 
     protected Property buildProp(String name, String value, String namespace) {
         Property prop = buildProp(name, value);
