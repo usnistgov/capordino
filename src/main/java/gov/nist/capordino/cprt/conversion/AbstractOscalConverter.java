@@ -46,6 +46,7 @@ public abstract class AbstractOscalConverter {
     protected final CprtMetadataVersion cprtMetadataVersion;
     protected final CprtRoot cprtRoot;
     protected final String CAPORDINO_CONTACT_EMAIL = "capordino@nist.gov";
+    protected final String OSCAL_CONTACT_EMAIL = "oscal@nist.gov";
 
     /**
      * The URI to use for CPRT-specific props.
@@ -148,7 +149,7 @@ public abstract class AbstractOscalConverter {
     private Party buildCreatorParty() {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
-        party.setName("National Institute of Standards and Technology");
+        party.setName("OSCAL Program");
         party.setShortName("NIST");
         party.setType("organization");
 
@@ -162,7 +163,7 @@ public abstract class AbstractOscalConverter {
         address.setPostalCode("20899-2000");
 
         party.addAddress(address);
-        party.addEmailAddress(CAPORDINO_CONTACT_EMAIL);
+        party.addEmailAddress(OSCAL_CONTACT_EMAIL);
         return party;
     }
 
@@ -328,6 +329,17 @@ public abstract class AbstractOscalConverter {
             });
     }
 
+    protected List<CprtElement> getElementsSafely(String parentId, String elemType, String relationType) {
+        try {
+            return getRelatedElementsBySourceIdWithType(parentId, elemType, relationType).map(elem -> {
+                return elem;
+            }).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        } catch (Exception e) {
+            
+            return new ArrayList<CprtElement>();
+        }
+    }
+
     /**
      * Escape square brackets in the input string to avoid confusing OSCAL's param syntax.
      */
@@ -342,6 +354,17 @@ public abstract class AbstractOscalConverter {
     // Escape square brackets in input string, keep square brackets
     protected String escapeSquareBracketsWithBackslashes(String input) {
         return input.replaceAll("\\[", "\\\\[").replaceAll("\\]", "\\\\]");
+    }
+
+    protected String removeSquareBrackets(String input) {
+        return input.replaceAll("\\[", "").replaceAll("\\]", "");
+    }
+
+
+    protected Property buildProp(String name, String value, String namespace) {
+        Property prop = buildProp(name, value);
+        prop.setNs(URI.create(namespace));
+        return prop;
     }
 
     protected Property buildProp(String name, String value) {
@@ -556,11 +579,11 @@ public abstract class AbstractOscalConverter {
     }
 
     // Builds a Part for Assessment Methods
-    protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix) {
+    protected ControlPart buildAssessmentMethodPart(CprtElement element, String separator, String prefix, String suffix, String namespace) {
         ControlPart part = new ControlPart();
         part.setName("assessment-method");
         part.setId(getEscapedIdentifier(element.element_identifier + "_" + part.getName() + "_" + element.element_type));
-        part.addProp(buildProp("method", element.element_type.toUpperCase()));
+        part.addProp(buildProp("method", element.element_type.toUpperCase(), namespace));
 
         // Assessment Methods contain Assessment Objects
         ControlPart objects = new ControlPart();
