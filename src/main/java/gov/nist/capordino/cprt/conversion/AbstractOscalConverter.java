@@ -148,19 +148,19 @@ public abstract class AbstractOscalConverter {
 
     private Party buildCreatorParty() {
         Party party = new Party();
-        party.setUuid(UUID.randomUUID());
+        party.setUuid(UUID.fromString("98c78f9b-5d50-4b01-b47f-d16801e8d0ab"));
         party.setName("OSCAL Program");
-        party.setShortName("NIST");
+        party.setShortName("NIST OSCAL");
         party.setType("organization");
 
         Address address = new Address();
         address.addAddrLine("National Institute of Standards and Technology");
         address.addAddrLine("Attn: Computer Security Division");
         address.addAddrLine("Information Technology Laboratory");
-        address.addAddrLine("100 Bureau Drive (Mail Stop 2000)");
+        address.addAddrLine("100 Bureau Drive (Mail Stop 203.)");
         address.setCity("Gaithersburg");
         address.setState("MD");
-        address.setPostalCode("20899-2000");
+        address.setPostalCode("20899-203.");
 
         party.addAddress(address);
         party.addEmailAddress(OSCAL_CONTACT_EMAIL);
@@ -171,6 +171,19 @@ public abstract class AbstractOscalConverter {
         Party party = new Party();
         party.setUuid(UUID.randomUUID());
         party.setType("organization");
+        party.setName("National Institute of Standards and Technology");
+        party.setShortName("NIST");
+
+        Address address = new Address();
+        address.addAddrLine("National Institute of Standards and Technology");
+        address.addAddrLine("Attn: Computer Security Division");
+        address.addAddrLine("Information Technology Laboratory");
+        address.addAddrLine("100 Bureau Drive (Mail Stop 203.)");
+        address.setCity("Gaithersburg");
+        address.setState("MD");
+        address.setPostalCode("20899-203.");
+
+        party.addAddress(address);
 
         party.addEmailAddress(cprtMetadataVersion.pocEmailAddress);
         return party;
@@ -178,7 +191,7 @@ public abstract class AbstractOscalConverter {
 
     private Metadata buildMetadata(@Nonnull Catalog catalog) {
         Metadata metadata = new Metadata();
-        metadata.setOscalVersion("v1.1.3");
+        metadata.setOscalVersion("v1.2.2");
         metadata.setLastModified(ZonedDateTime.now());
         
         metadata.setTitle(MarkupLine.fromMarkdown(cprtMetadataVersion.frameworkVersionName));
@@ -232,7 +245,7 @@ public abstract class AbstractOscalConverter {
 
         Role creatorRole = new Role();
         creatorRole.setId("creator");
-        creatorRole.setTitle(MarkupLine.fromMarkdown("Document creator"));
+        creatorRole.setTitle(MarkupLine.fromMarkdown("OSCAL Document Creator"));
         metadata.addRole(creatorRole);
 
         ResponsibleParty creatorResponsibleParty = new ResponsibleParty();
@@ -254,15 +267,25 @@ public abstract class AbstractOscalConverter {
             publisherResponsibleParty.addPartyUuid(publisherParty.getUuid());
             metadata.addResponsibleParty(publisherResponsibleParty);
 
-            Role contactRole = new Role();
-            contactRole.setId("contact");
-            contactRole.setTitle(MarkupLine.fromMarkdown("Contact"));
-            metadata.addRole(contactRole);
+            Role contactCreatorRole = new Role();
+            contactCreatorRole.setId("contact-creator");
+            contactCreatorRole.setTitle(MarkupLine.fromMarkdown("Contact Electronic Version Creator"));
+            metadata.addRole(contactCreatorRole);
 
-            ResponsibleParty contactResponsibleParty = new ResponsibleParty();
-            contactResponsibleParty.setRoleId(contactRole.getId());
-            contactResponsibleParty.addPartyUuid(publisherParty.getUuid());
-            metadata.addResponsibleParty(contactResponsibleParty);
+            ResponsibleParty contactCreatorResponsibleParty = new ResponsibleParty();
+            contactCreatorResponsibleParty.setRoleId(contactCreatorRole.getId());
+            contactCreatorResponsibleParty.addPartyUuid(creatorParty.getUuid());
+            metadata.addResponsibleParty(contactCreatorResponsibleParty);
+
+            Role contactPublisherRole = new Role();
+            contactPublisherRole.setId("contact-publisher");
+            contactPublisherRole.setTitle(MarkupLine.fromMarkdown("Contact Publisher"));
+            metadata.addRole(contactPublisherRole);
+
+            ResponsibleParty contactPublisherResponsibleParty = new ResponsibleParty();
+            contactPublisherResponsibleParty.setRoleId(contactPublisherRole.getId());
+            contactPublisherResponsibleParty.addPartyUuid(publisherParty.getUuid());
+            metadata.addResponsibleParty(contactPublisherResponsibleParty);
         }
 
         return metadata;
