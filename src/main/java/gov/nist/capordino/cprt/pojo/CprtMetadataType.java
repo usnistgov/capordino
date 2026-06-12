@@ -1,5 +1,8 @@
 package gov.nist.capordino.cprt.pojo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class CprtMetadataType {
     public String elementTypeIdentifier;
     public String name;
