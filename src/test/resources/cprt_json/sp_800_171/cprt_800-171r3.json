@@ -1,7 +1,4 @@
 {
-  "response": {
-    "requestType": 4,
-    "elements": {
       "documents": [
         {
           "doc_identifier": "SP_800_171_3_0_0",
@@ -26804,6 +26801,4 @@
           "provenance_doc_identifier": "SP_800_171_3_0_0"
         }
       ]
-    }
-  }
 }

@@ -1,4 +1,4 @@
-package gov.nist.capordino.cprt.conversion.csf20;
+package gov.nist.capordino.cprt.conversion.ai_rmf;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -32,17 +32,15 @@ import gov.nist.secauto.oscal.lib.OscalBindingContext;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class Csf20CprtOscalConverterTest {
-    /**
-     * A CPRT file that contains a subset of CSF 2.0 content.
-     */
-    final static File csfCprtSample = new File("src/test/resources/cprt_csf20_sample.json");
+public class AIRMFCprtOscalConverterTest {
+
+    final static File AIRMFSample = new File("src/test/resources/cprt_json/ai_rmf/cprt_AI_100_1_0_0_05-21-2026.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;
 
     static Path sampleOutFilePath;
-    static Path csf20OutFilePath;
+    static Path AIRMFOutFilePath;
 
     private static OscalBindingContext bindingContext;
     private static CprtRoot root;
@@ -51,30 +49,27 @@ public class Csf20CprtOscalConverterTest {
     @BeforeAll
     static void initialize() throws StreamReadException, DatabindException, IOException {
         bindingContext = OscalBindingContext.instance();
-        sampleOutFilePath = tempOutDirectory.resolve("csf20-sample_catalog.xml");
-        csf20OutFilePath = tempOutDirectory.resolve("csf20_catalog.xml");
+        sampleOutFilePath = tempOutDirectory.resolve("airmf-sample_catalog.xml");
+        AIRMFOutFilePath = tempOutDirectory.resolve("airmf_catalog.xml");
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
         
         ObjectMapper mapper = new ObjectMapper();
         
-        root = mapper.readValue(csfCprtSample, CprtRoot.class);
+        root = mapper.readValue(AIRMFSample, CprtRoot.class);
 
-        version.name = "Cybersecurity Framework";
-        version.frameworkIdentifier = "CSF";
-        version.frameworkWebSite = "https://www.nist.gov/cyberframework";
-        version.frameworkVersionIdentifier = "CSF_2_0_0";
-        version.interfaceIdentifier = "CSF_2";
-        version.frameworkVersionName = "The NIST Cybersecurity Framework 2.0 Draft (SAMPLE)";
-        version.shortName = "Cybersecurity Framework v2.0 SAMPLE";
-        version.version = "Version 2.0.0";
+        version.name = "Artificial Intelligence Risk Management Framework";
+        version.frameworkIdentifier = "AI_100";
+        version.frameworkWebSite = "https://www.nist.gov/itl/ai-risk-management-framework";
+        version.frameworkVersionIdentifier = "AI_100_1_0_0";
+        version.version = "1.1.0";
         version.publicationReleaseDate = new Date();
     }
 
     @Test
     @Order(1)
     void testConvertSampleToOscal() throws StreamReadException, DatabindException, IOException, InvalidFrameworkIdentifier {        
-        Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version, root);
+        AIRMFCprtOscalConverter converter = new AIRMFCprtOscalConverter(version, root);
         Catalog catalog = converter.buildCatalog();
 
         // Write to a file and load again to ensure the serialization and deserialization works
@@ -93,24 +88,24 @@ public class Csf20CprtOscalConverterTest {
     @Test
     @Order(3)
     @Tag("Online")
-    void testConvertCsf20ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+    void testConvertAIRMFToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         CprtApiClient client = new CprtApiClient();
-        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("CSF_2_0_0")).findFirst().orElseThrow();
+        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("AI_100_1_0_0")).findFirst().orElseThrow();
 
-        Csf20CprtOscalConverter converter = new Csf20CprtOscalConverter(version);
+        AIRMFCprtOscalConverter converter = new AIRMFCprtOscalConverter(version);
         Catalog catalog = converter.buildCatalog();
 
         // Write to a file and load again to ensure the serialization and deserialization works
         ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-        serializer.serialize(catalog, csf20OutFilePath);
-        assertNotNull(bindingContext.loadCatalog(csf20OutFilePath));
+        serializer.serialize(catalog, AIRMFOutFilePath);
+        assertNotNull(bindingContext.loadCatalog(AIRMFOutFilePath));
     }
 
     @Test
     @Order(4)
     @Tag("Online")
-    void testValidateCsf20Oscal() throws IOException {
-        IValidationResult results = bindingContext.validateWithConstraints(csf20OutFilePath);
+    void testValidateAIRMFToOscal() throws IOException {
+        IValidationResult results = bindingContext.validateWithConstraints(AIRMFOutFilePath);
         assertTrue(results.isPassing());
     }
 }

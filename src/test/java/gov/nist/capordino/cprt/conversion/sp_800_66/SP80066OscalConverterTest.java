@@ -36,7 +36,7 @@ public class SP80066OscalConverterTest {
     /**
      * A CPRT file that contains a subset of 800-66 content.
      */
-    final static File Cprt80066Sample = new File("src/test/resources/cprt_SP800_66_2_0_0_09-15-2025.json");
+    final static File Cprt80066Sample = new File("src/test/resources/cprt_json/sp_800_66/cprt_SP800_66_2_0_0_09-15-2025.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;

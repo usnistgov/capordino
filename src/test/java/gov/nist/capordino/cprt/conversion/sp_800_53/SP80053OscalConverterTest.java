@@ -36,7 +36,7 @@ public class SP80053OscalConverterTest {
     /**
      * A CPRT file that contains a subset of 800-53 content.
      */
-    final static File Cprt80053Sample = new File("src/test/resources/cprt_SP_800_53_5_1_1_07-15-2025.json");
+    final static File Cprt80053Sample = new File("src/test/resources/cprt_json/sp_800_53/cprt_SP_800_53_5_2_0_06-11-2026.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;
@@ -63,8 +63,8 @@ public class SP80053OscalConverterTest {
         version.name = "SP 800-53 - Security and Privacy Controls for Information Systems and Organizations";
         version.frameworkIdentifier = "SP_800_53";
         version.frameworkWebSite = "https://csrc.nist.gov/projects/risk-management";
-        version.frameworkVersionIdentifier = "SP_800_53_5_1_1";
-        version.version = "5.1.1";
+        version.frameworkVersionIdentifier = "SP_800_53_5_2_0";
+        version.version = "5.2.0";
         version.publicationReleaseDate = new Date();
     }
 
@@ -92,7 +92,7 @@ public class SP80053OscalConverterTest {
     @Tag("Online")
     void testConvertSP80053ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         CprtApiClient client = new CprtApiClient();
-        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_53_5_1_1")).findFirst().orElseThrow();
+        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_53_5_2_0")).findFirst().orElseThrow();
 
         SP80053OscalConverter converter = new SP80053OscalConverter(version);
         Catalog catalog = converter.buildCatalog();

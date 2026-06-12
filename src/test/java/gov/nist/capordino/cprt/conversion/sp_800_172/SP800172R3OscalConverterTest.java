@@ -1,4 +1,4 @@
-package gov.nist.capordino.cprt.conversion.sp_800_171;
+package gov.nist.capordino.cprt.conversion.sp_800_172;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -32,17 +32,17 @@ import gov.nist.secauto.oscal.lib.OscalBindingContext;
 import gov.nist.secauto.oscal.lib.model.Catalog;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-public class SP800171OscalConverterTest {
+public class SP800172R3OscalConverterTest {
     /**
-     * A CPRT file that contains a subset of 800-171 content.
+     * A CPRT file that contains a subset of 800-172 content.
      */
-    final static File Cprt800171Sample = new File("src/test/resources/cprt_json/sp_800_171/cprt_800-171r3.json");
+    final static File Cprt800172Sample = new File("src/test/resources/cprt_json/sp_800_172/cprt_SP_800_172_3_0_0_05-20-2026.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;
 
     static Path sampleOutFilePath;
-    static Path Cprt800171OutFilePath;
+    static Path Cprt800172OutFilePath;
 
     private static OscalBindingContext bindingContext;
     private static CprtRoot root;
@@ -51,27 +51,27 @@ public class SP800171OscalConverterTest {
     @BeforeAll
     static void initialize() throws StreamReadException, DatabindException, IOException {
         bindingContext = OscalBindingContext.instance();
-        sampleOutFilePath = tempOutDirectory.resolve("cprt800171-sample_catalog.xml");
-        Cprt800171OutFilePath = tempOutDirectory.resolve("cprt800171_catalog.xml");
+        sampleOutFilePath = tempOutDirectory.resolve("cprt800172-sample_catalog.xml");
+        Cprt800172OutFilePath = tempOutDirectory.resolve("cprt800172_catalog.xml");
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
         
         ObjectMapper mapper = new ObjectMapper();
         
-        root = mapper.readValue(Cprt800171Sample, CprtRoot.class);
+        root = mapper.readValue(Cprt800172Sample, CprtRoot.class);
 
-        version.name = "Protecting Controlled Unclassified Information in Nonfederal Systems and Organizations";
-        version.frameworkIdentifier = "SP_800_171";
-        version.frameworkWebSite = "https://csrc.nist.gov/pubs/sp/800/171/r3/final";
-        version.frameworkVersionIdentifier = "SP_800_171_3_0_0";
-        version.version = "Version 3.0.0";
+        version.name = "Enhanced Security Requirements for Protecting Controlled Unclassified Information";
+        version.frameworkIdentifier = "SP800_172";
+        version.frameworkWebSite = "https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-172.pdf";
+        version.frameworkVersionIdentifier = "SP_800_172_3_0_0";
+        version.version = "3.0.0";
         version.publicationReleaseDate = new Date();
     }
 
     @Test
     @Order(1)
     void testConvertSampleToOscal() throws StreamReadException, DatabindException, IOException, InvalidFrameworkIdentifier {        
-        SP800171OscalConverter converter = new SP800171OscalConverter(version, root);
+        SP800172R3OscalConverter converter = new SP800172R3OscalConverter(version, root);
         Catalog catalog = converter.buildCatalog();
 
         // Write to a file and load again to ensure the serialization and deserialization works
@@ -90,24 +90,24 @@ public class SP800171OscalConverterTest {
     @Test
     @Order(3)
     @Tag("Online")
-    void testConvertSP800171ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
+    void testConvertSP800172ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         CprtApiClient client = new CprtApiClient();
-        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_171_3_0_0")).findFirst().orElseThrow();
+        CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals("SP_800_172_3_0_0")).findFirst().orElseThrow();
 
-        SP800171OscalConverter converter = new SP800171OscalConverter(version);
+        SP800172R3OscalConverter converter = new SP800172R3OscalConverter(version);
         Catalog catalog = converter.buildCatalog();
 
         // Write to a file and load again to ensure the serialization and deserialization works
         ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
-        serializer.serialize(catalog, Cprt800171OutFilePath);
-        assertNotNull(bindingContext.loadCatalog(Cprt800171OutFilePath));
+        serializer.serialize(catalog, Cprt800172OutFilePath);
+        assertNotNull(bindingContext.loadCatalog(Cprt800172OutFilePath));
     }
 
     @Test
     @Order(4)
     @Tag("Online")
-    void testValidateSP800171ToOscal() throws IOException {
-        IValidationResult results = bindingContext.validateWithConstraints(Cprt800171OutFilePath);
+    void testValidateSP800172ToOscal() throws IOException {
+        IValidationResult results = bindingContext.validateWithConstraints(Cprt800172OutFilePath);
         assertTrue(results.isPassing());
     }
 }
