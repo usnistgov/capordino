@@ -1,4 +1,4 @@
-package gov.nist.capordino.cprt.conversion.csf20;
+package gov.nist.capordino.cprt.conversion.csf;
 
 import java.io.IOException;
 import java.net.URI;

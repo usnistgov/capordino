@@ -13,7 +13,7 @@ import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
 import gov.nist.capordino.cprt.conversion.UnimplementedFrameworkIdentifier;
-import gov.nist.capordino.cprt.conversion.csf20.Csf20CprtOscalConverter;
+import gov.nist.capordino.cprt.conversion.csf.Csf20CprtOscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_171.SP800171OscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_218.SP800218CprtOscalConverter;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
