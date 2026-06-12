@@ -1,5 +1,7 @@
 CSF,cyberframework@nist.gov
 SP_800_171,800-171comments@list.nist.gov
 SSDF,ssdf@nist.gov
-SP_800_53,sec-cert@nist.gov
+SP800_66,sp800-66-comments@nist.gov
 SP800_172,sec-cert@nist.gov
+AI_100,AIframework@nist.gov
+SP_800_53,sec-cert@nist.gov
