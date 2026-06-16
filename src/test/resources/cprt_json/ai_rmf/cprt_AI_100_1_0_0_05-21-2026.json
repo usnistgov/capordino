@@ -1,4 +1,7 @@
 {
+  "response": {
+    "requestType": 4,
+    "elements": {
       "documents": [
         {
           "doc_identifier": "AI_100_1_0_0",
@@ -29205,4 +29208,6 @@
           "provenance_doc_identifier": "AI_100_1_0_0"
         }
       ]
+    }
+  }
 }

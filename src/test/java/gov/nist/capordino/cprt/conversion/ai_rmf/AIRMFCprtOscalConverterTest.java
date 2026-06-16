@@ -18,11 +18,13 @@ import org.junit.jupiter.api.io.CleanupMode;
 import org.junit.jupiter.api.io.TempDir;
 
 import com.fasterxml.jackson.core.exc.StreamReadException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.conversion.InvalidFrameworkIdentifier;
+import gov.nist.capordino.cprt.pojo.CprtExportResponse;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -55,8 +57,10 @@ public class AIRMFCprtOscalConverterTest {
         System.out.println("Saving output to: " + tempOutDirectory.toString());
         
         ObjectMapper mapper = new ObjectMapper();
-        
-        root = mapper.readValue(AIRMFSample, CprtRoot.class);
+        mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+
+        CprtExportResponse response = mapper.readValue(AIRMFSample, CprtExportResponse.class);
+        root = response.elements;
 
         version.name = "Artificial Intelligence Risk Management Framework";
         version.frameworkIdentifier = "AI_100";
