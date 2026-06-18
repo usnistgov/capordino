@@ -650,8 +650,10 @@ public abstract class AbstractOscalConverter {
         // Link to publication
         Rlink rlink = new Rlink();
         rlink.setHref(URI.create(element.text));
-        resource.addRlink(rlink);
-            
+        if (! element.text.isBlank()) {
+            resource.addRlink(rlink);
+        }
+        
         return resource;
     }
 
