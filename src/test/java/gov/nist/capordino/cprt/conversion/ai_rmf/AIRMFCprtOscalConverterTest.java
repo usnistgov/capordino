@@ -36,7 +36,7 @@ import gov.nist.secauto.oscal.lib.model.Catalog;
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AIRMFCprtOscalConverterTest {
 
-    final static File AIRMFSample = new File("src/test/resources/cprt_json/ai_rmf/cprt_AI_100_1_0_0_05-21-2026.json");
+    final static File AIRMFSample = new File("src/test/resources/cprt_json/ai_rmf/cprt_AI_100_1_0_0_07-07-2026.json");
     
     @TempDir(cleanup = CleanupMode.NEVER) // Change to NEVER to keep the temp directory
     static Path tempOutDirectory;
