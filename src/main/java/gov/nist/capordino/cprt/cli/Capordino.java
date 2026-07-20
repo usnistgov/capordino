@@ -88,7 +88,6 @@ public class Capordino implements Runnable {
     @Override
     public void run() { 
         // Initialize
-
         OscalBindingContext bindingContext = OscalBindingContext.instance();
 
         Path tempOutDirectory = FileSystems.getDefault().getPath(output_directory);
@@ -97,15 +96,13 @@ public class Capordino implements Runnable {
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
 
-        //Convert CPRT to OSCAL
         CprtApiClient client = new CprtApiClient();
-        CprtMetadataVersion version = new CprtMetadataVersion();
         
         try {
             if (Arrays.asList(IMPLEMENTED_IDENTIFIERS).contains(framework_version_identifier)) {
                 CprtRoot root = null;
                 // Take in framework version from CLI
-                version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+                CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
 
                 // If the file option is used, then configure ObjectMapper to read the json file and use that instead of HTTP response
                 if (! filepath.isBlank()) {
