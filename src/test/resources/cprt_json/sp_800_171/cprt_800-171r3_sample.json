@@ -1,0 +1,671 @@
+{
+      "documents": [
+        {
+          "doc_identifier": "SP_800_171_3_0_0",
+          "name": "Protecting Controlled Unclassified Information in Nonfederal Systems and Organizations",
+          "version": "3.0.0",
+          "website": "https://csrc.nist.gov/pubs/sp/800/171/r3/final"
+        }
+      ],
+      "relationship_types": [
+        {
+          "relationship_identifier": "projection",
+          "description": "Represents a relationship between two elements."
+        },
+        {
+          "relationship_identifier": "incorporated_into",
+          "description": "Used within the 800-53 dataset to denote where a withdrawn control was incorporated into"
+        },
+        {
+          "relationship_identifier": "external_reference",
+          "description": "Represents a relationship to an external source of information"
+        },
+        {
+          "relationship_identifier": "addressed_by",
+          "description": "Used to denote addressed by relationship"
+        }
+      ],
+      "elements": [
+        {
+          "element_type": "family",
+          "element_identifier": "03.01",
+          "title": "Access Control",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        
+        
+
+        {
+          "element_type": "requirement",
+          "element_identifier": "03.01.01",
+          "title": "Account Management",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "element_type": "security_requirement",
+          "element_identifier": "SR-03.01.01",
+          "title": "",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "security_requirement",
+          "element_identifier": "SR-03.01.01.f",
+          "title": "f",
+          "text": "Disable system accounts when:",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "security_requirement",
+          "element_identifier": "SR-03.01.01.f.01",
+          "title": "01",
+          "text": "The accounts have expired,",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "security_requirement",
+          "element_identifier": "SR-03.01.01.f.02",
+          "title": "02",
+          "text": "The accounts have been inactive for [Assignment: organization-defined time period],",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        
+        
+    
+
+        
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.a[01]",
+          "title": "",
+          "text": "system account types allowed are defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.a[02]",
+          "title": "",
+          "text": "system account types prohibited are defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.c.01",
+          "title": "",
+          "text": "authorized users of the system are specified.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.c.02",
+          "title": "",
+          "text": "group and role memberships are specified.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.e",
+          "title": "",
+          "text": "the use of system accounts is monitored.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.g.01",
+          "title": "",
+          "text": "account managers and designated personnel or roles are notified within <A.03.01.01.ODP[02]: time period> when accounts are no longer required.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.g.02",
+          "title": "",
+          "text": "account managers and designated personnel or roles are notified within <A.03.01.01.ODP[03]: time period> when users are terminated or transferred.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "determination",
+          "element_identifier": "DS-A.03.01.01.h",
+          "title": "",
+          "text": "users are required to log out of the system after <A.03.01.01.ODP[05]: time period> of expected inactivity or when the following circumstances occur: <A.03.01.01.ODP[06]: circumstances>.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        
+        {
+          "element_type": "odp",
+          "element_identifier": "A.03.01.01.ODP[02]",
+          "title": "time period",
+          "text": "the time period within which to notify account managers and designated personnel or roles when accounts are no longer required is defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp",
+          "element_identifier": "A.03.01.01.ODP[03]",
+          "title": "time period",
+          "text": "the time period within which to notify account managers and designated personnel or roles when users are terminated or transferred is defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp",
+          "element_identifier": "A.03.01.01.ODP[05]",
+          "title": "time period",
+          "text": "the time period of expected inactivity requiring users to log out of the system is defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp",
+          "element_identifier": "A.03.01.01.ODP[06]",
+          "title": "circumstances",
+          "text": "circumstances requiring users to log out of the system are defined.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        
+      
+        {
+          "element_type": "odp_statement",
+          "element_identifier": "OS-a.03.01.01.odp[02]",
+          "title": "",
+          "text": "organization-defined time period",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp_statement",
+          "element_identifier": "OS-a.03.01.01.odp[03]",
+          "title": "",
+          "text": "organization-defined time period",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp_statement",
+          "element_identifier": "OS-a.03.01.01.odp[05]",
+          "title": "",
+          "text": "organization-defined time period",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp_statement",
+          "element_identifier": "OS-a.03.01.01.odp[06]",
+          "title": "",
+          "text": "organization-defined circumstances",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+        {
+          "element_type": "odp_type",
+          "element_identifier": "single_select",
+          "title": "Selection (one)",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp_type",
+          "element_identifier": "multi_select",
+          "title": "Selection (one or more)",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "odp_type",
+          "element_identifier": "single_entry",
+          "title": "Assignment",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+        {
+          "element_type": "examine",
+          "element_identifier": "E-03.01.01",
+          "title": "",
+          "text": "[SELECT FROM: access control policy and procedures; personnel termination or transfer policies and procedures; procedures for account management; list of active system accounts and the name of the individual associated with each account; system design documentation; list of conditions for group and role membership; system configuration settings; notifications of recent transfers, separations, or terminations of employees; list of recently disabled system accounts and the name of the individual associated with each account; list of user activities that pose significant organizational risks; access authorization records; account management compliance reviews; system monitoring and audit records; system security plan; system-generated list of accounts removed; system-generated list of emergency accounts disabled; system-generated list of disabled accounts; other relevant documents and records]",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "interview",
+          "element_identifier": "I-03.01.01",
+          "title": "",
+          "text": "[SELECT FROM: personnel with account management responsibilities; system administrators; personnel with information security responsibilities; system developers]",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "test",
+          "element_identifier": "T-03.01.01",
+          "title": "",
+          "text": "[SELECT FROM: processes for account management on the system; mechanisms for implementing account management]",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "element_type": "discussion",
+          "element_identifier": "D-03.01.01",
+          "title": "",
+          "text": "This requirement focuses on account management for systems and applications. The definition and enforcement of access authorizations other than those determined by account type (e.g., privileged access, non-privileged access) are addressed in <a href=\"#/cprt/framework/version/SP_800_171_3_0_0/home?element=03.01.02\">03.01.02</a>. System account types include individual, group, temporary, system, guest, anonymous, emergency, developer, and service. Users who require administrative privileges on system accounts receive additional scrutiny by personnel responsible for approving such accounts and privileged access. Types of accounts that organizations may prohibit due to increased risk include group, emergency, guest, anonymous, and temporary. Organizations may choose to define access privileges or other attributes by account, type of account, or a combination of both. Other attributes required for authorizing access include restrictions on the time of day, day of the week, and point of origin. When defining other system account attributes, organizations consider system requirements (e.g., system upgrades, scheduled maintenance) and mission and business requirements (e.g., time zone differences, remote access to facilitate travel requirements). Users who pose a significant security risk include individuals for whom reliable evidence indicates either the intention to use authorized access to the system to cause harm or that adversaries will cause harm through them. Close coordination among mission and business owners, system administrators, human resource managers, and legal staff is essential when disabling system accounts for high-risk individuals. Time periods for the notification of organizational personnel or roles may vary. Inactivity logout is behavior- or policy-based and requires users to take physical action to log out when they are expecting inactivity longer than the defined period. Automatic enforcement of inactivity logout is addressed by <a href=\"#/cprt/framework/version/SP_800_171_3_0_0/home?element=03.01.10\">03.01.10</a>.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "element_type": "reference",
+          "element_identifier": "IR 7874",
+          "title": "Hu VC, Scarfone KA (2012) Guidelines for Access Control System Evaluation Metrics. (National Institute of Standards and Technology, Gaithersburg, MD), NIST Interagency or Internal Report (IR) 7874.",
+          "text": "https://doi.org/10.6028/NIST.IR.7874",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+
+
+
+
+
+
+
+
+        {
+          "element_type": "requirement",
+          "element_identifier": "03.01.13",
+          "title": "",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "withdraw_reason",
+          "element_identifier": "WR-03.01.13",
+          "title": "",
+          "text": "Addressed by 03.13.08.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "element_type": "requirement",
+          "element_identifier": "03.01.14",
+          "title": "",
+          "text": "",
+          "doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "element_type": "withdraw_reason",
+          "element_identifier": "WR-03.01.14",
+          "title": "",
+          "text": "Incorporated into 03.01.12.",
+          "doc_identifier": "SP_800_171_3_0_0"
+        }
+
+      ],
+      "relationships": [
+        {
+          "source_element_identifier": "03.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "SR-03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+    
+        {
+          "source_element_identifier": "SR-03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "SR-03.01.01.f",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+        {
+          "source_element_identifier": "SR-03.01.01.a",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.a[01]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.a",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.a[02]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.c.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.c.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.c.02",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.c.02",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.e",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.e",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+        {
+          "source_element_identifier": "SR-03.01.01.f",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "SR-03.01.01.f.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.f",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "SR-03.01.01.f.02",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+        {
+          "source_element_identifier": "SR-03.01.01.f.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.f.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.f.02",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.f.02",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+        {
+          "source_element_identifier": "SR-03.01.01.g.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.g.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "DS-A.03.01.01.g.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "A.03.01.01.ODP[02]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "SR-03.01.01.g.02",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.g.02",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "DS-A.03.01.01.g.02",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "A.03.01.01.ODP[03]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        
+        {
+          "source_element_identifier": "SR-03.01.01.h",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "DS-A.03.01.01.h",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "DS-A.03.01.01.h",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "A.03.01.01.ODP[05]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "DS-A.03.01.01.h",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "A.03.01.01.ODP[06]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+    
+    
+        {
+          "source_element_identifier": "A.03.01.01.ODP[02]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "OS-a.03.01.01.odp[02]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[03]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "OS-a.03.01.01.odp[03]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[05]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "OS-a.03.01.01.odp[05]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[06]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "OS-a.03.01.01.odp[06]",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+       
+
+        
+        {
+          "source_element_identifier": "A.03.01.01.ODP[06]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "single_entry",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[05]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "single_entry",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[03]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "single_entry",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "A.03.01.01.ODP[02]",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "single_entry",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+
+
+        
+
+
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "E-03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "I-03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "T-03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        
+
+
+
+
+
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "D-03.01.01",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+
+
+
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "AC-02",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "external_reference",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "AC-02(03)",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "external_reference",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+
+
+
+        {
+          "source_element_identifier": "03.01.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "IR 7874",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+
+
+
+
+
+
+
+
+
+        {
+          "source_element_identifier": "03.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "03.01.14",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01.14",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "WR-03.01.14",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "WR-03.01.14",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "03.01.12",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "incorporated_into",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "03.01.13",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "WR-03.01.13",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "03.13.08",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "addressed_by",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        },
+        {
+          "source_element_identifier": "03.01.13",
+          "source_doc_identifier": "SP_800_171_3_0_0",
+          "dest_element_identifier": "WR-03.01.13",
+          "dest_doc_identifier": "SP_800_171_3_0_0",
+          "relationship_identifier": "projection",
+          "provenance_doc_identifier": "SP_800_171_3_0_0"
+        }
+      ]
+}
+  

@@ -2,7 +2,14 @@
 
 Development of tooling to allow conversion of datasets managed by the [Cybersecurity and Privacy Reference Tool (CPRT)](https://csrc.nist.gov/projects/cprt) into [OSCAL](https://www.nist.gov/OSCAL) formats. 
 
-Currently, the command line tool supports generating CSF 2.0 catalog. 
+Currently, the command line tool supports generating catalogs for: 
+- CSF v2.0
+- SP 800-171 Rev 3
+- SP 800-218 (SSDF) Version 1.1
+- SP 800-66 Rev 2
+- SP 800-172 and 172A 1.0.0 (combined into one catalog)
+- SP 800-172 and 172A Rev 3 (combined into one catalog)
+- AI RMF 1.0
 
 ### Building
 #### Clone the git repository
@@ -50,17 +57,20 @@ Use --help to see the available options.
 ```
 Usage: capordino [-hV] [-o=<output_directory>] <framework version identifier>
       <framework version identifier>
-                  Framework version identifier to build catalog for, REQUIRED
+                  REQUIRED: framework version identifier to build catalog for
+                  Implemented: CSF_2_0_0, SP_800_171_3_0_0, SP_800_218_1_1_0,
+                    SP800_66_2_0_0, SP_800_172_1_0_0, SP_800_172_3_0_0,
+                    AI_100_1_0_0
   -h, --help      Show this help message and exit.
   -o, --output-directory=<output_directory>
                   Directory for capordino tool output (built catalog), default
-                    is "src/test/resources"
+                    is "./catalogs/"
   -V, --version   Print version information and exit.
 ```
 
 ```bash
-./capordino.sh -o "src/test/resources" "CSF_2_0_0"
+./capordino.sh -o "catalogs/nist.gov/CSF/" "CSF_2_0_0"
 ```
 
 #### Output
-The built catalog is written to specified directory or "src/test/resources" by default.
+The built catalog is written to specified directory or "catalogs/" by default.
