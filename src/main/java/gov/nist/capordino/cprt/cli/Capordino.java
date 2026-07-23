@@ -5,9 +5,10 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Date;
+
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 
 import gov.nist.capordino.cprt.api.CprtApiClient;
 import gov.nist.capordino.cprt.conversion.AbstractOscalConverter;
@@ -20,6 +21,8 @@ import gov.nist.capordino.cprt.conversion.sp_800_172.SP800172OscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_172.SP800172R3OscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_218.SP800218CprtOscalConverter;
 import gov.nist.capordino.cprt.conversion.sp_800_66.SP80066OscalConverter;
+
+import gov.nist.capordino.cprt.pojo.CprtExportResponse;
 import gov.nist.capordino.cprt.pojo.CprtMetadataVersion;
 import gov.nist.capordino.cprt.pojo.CprtRoot;
 import gov.nist.secauto.metaschema.binding.io.Format;
@@ -51,10 +54,10 @@ public class Capordino implements Runnable {
         AI_RMF_1_0_0_IDENTIFIER
     };
 
-    // // File path if -f option is used
-    // @Option(names = {"-f", "--file-path"}, defaultValue = "",
-    //             description = "File path for framework json, if already downloaded from CPRT")
-    // private String filepath;
+    // File path if -f option is used
+    @Option(names = {"-f", "--file-path"}, defaultValue = "",
+                description = "File path for framework json, if already downloaded from CPRT")
+    private String filepath;
 
     // Framework version identifier to build catalog
     @Parameters(paramLabel = "<framework version identifier>",
@@ -85,8 +88,6 @@ public class Capordino implements Runnable {
     @Override
     public void run() { 
         // Initialize
-        // File cprtSample = new File(filepath);
-
         OscalBindingContext bindingContext = OscalBindingContext.instance();
 
         Path tempOutDirectory = FileSystems.getDefault().getPath(output_directory);
@@ -95,39 +96,47 @@ public class Capordino implements Runnable {
 
         System.out.println("Saving output to: " + tempOutDirectory.toString());
 
-        // ObjectMapper mapper = new ObjectMapper();
-        
-        //Convert CPRT to OSCAL
         CprtApiClient client = new CprtApiClient();
-        CprtMetadataVersion version = new CprtMetadataVersion();
-
+        
         try {
             if (Arrays.asList(IMPLEMENTED_IDENTIFIERS).contains(framework_version_identifier)) {
+                CprtRoot root = null;
                 // Take in framework version from CLI
-                version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+                CprtMetadataVersion version = client.getMetadata().versions.stream().filter(v -> v.frameworkVersionIdentifier.equals(framework_version_identifier)).findFirst().orElseThrow();
+
+                // If the file option is used, then configure ObjectMapper to read the json file and use that instead of HTTP response
+                if (! filepath.isBlank()) {
+                    File cprtSample = new File(filepath);
+                    ObjectMapper mapper = new ObjectMapper();
+                    mapper.configure(DeserializationFeature.UNWRAP_ROOT_VALUE, true);
+
+                    CprtExportResponse response = mapper.readValue(cprtSample, CprtExportResponse.class);
+                    root = response.elements;
+                }
     
                 // Build catalog
                 AbstractOscalConverter converter = null;
+                // If file option is used, then use the constructor that does not call CprtApiClient
                 if (framework_version_identifier.equals(CSF_2_0_0_IDENTIFIER)) {
-                    converter = new Csf20CprtOscalConverter(version);
+                    converter = filepath.isBlank() ? new Csf20CprtOscalConverter(version) : new Csf20CprtOscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(SP_800_171_3_0_0_IDENTIFIER)) {
-                    converter = new SP800171OscalConverter(version);
+                    converter = filepath.isBlank() ? new SP800171OscalConverter(version) : new SP800171OscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(SP_800_218_1_1_0_IDENTIFIER)) {
-                    converter = new SP800218CprtOscalConverter(version);
+                    converter = filepath.isBlank() ? new SP800218CprtOscalConverter(version) : new SP800218CprtOscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(SP_800_66_2_0_0_IDENTIFIER)) {
-                    converter = new SP80066OscalConverter(version);
+                    converter = filepath.isBlank() ? new SP80066OscalConverter(version) : new SP80066OscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(SP_800_172_1_0_0_IDENTIFIER)) {
-                    converter = new SP800172OscalConverter(version);
+                    converter = filepath.isBlank() ? new SP800172OscalConverter(version) : new SP800172OscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(SP_800_172_3_0_0_IDENTIFIER)) {
-                    converter = new SP800172R3OscalConverter(version);
+                    converter = filepath.isBlank() ? new SP800172R3OscalConverter(version) : new SP800172R3OscalConverter(version, root);
                 }
                 else if (framework_version_identifier.equals(AI_RMF_1_0_0_IDENTIFIER)) {
-                    converter = new AIRMFCprtOscalConverter(version);
+                    converter = filepath.isBlank() ? new AIRMFCprtOscalConverter(version) : new AIRMFCprtOscalConverter(version, root);
                 }
                 else {
                     throw new UnimplementedFrameworkIdentifier(framework_version_identifier);

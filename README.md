@@ -55,12 +55,15 @@ chmod u+x capordino.sh
 Use --help to see the available options.
 `./capordino.sh --help`
 ```
-Usage: capordino [-hV] [-o=<output_directory>] <framework version identifier>
+Usage: capordino [-hV] [-f=<filepath>] [-o=<output_directory>] <framework 
+                 version identifier>
       <framework version identifier>
                   REQUIRED: framework version identifier to build catalog for
                   Implemented: CSF_2_0_0, SP_800_171_3_0_0, SP_800_218_1_1_0,
                     SP800_66_2_0_0, SP_800_172_1_0_0, SP_800_172_3_0_0,
                     AI_100_1_0_0
+  -f, --file-path=<filepath>
+                  File path for framework json, if already downloaded from CPRT
   -h, --help      Show this help message and exit.
   -o, --output-directory=<output_directory>
                   Directory for capordino tool output (built catalog), default
@@ -68,9 +71,16 @@ Usage: capordino [-hV] [-o=<output_directory>] <framework version identifier>
   -V, --version   Print version information and exit.
 ```
 
-```bash
+#### Default usage
+```shell
 ./capordino.sh -o "catalogs/nist.gov/CSF/" "CSF_2_0_0"
 ```
 
 #### Output
 The built catalog is written to specified directory or "catalogs/" by default.
+
+#### Specify output directory
+
+```shell
+./capordino.sh -o "catalogs/nist.gov/CSF/" "CSF_2_0_0"
+```
