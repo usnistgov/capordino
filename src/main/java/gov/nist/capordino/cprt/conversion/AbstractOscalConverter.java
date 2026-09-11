@@ -622,8 +622,30 @@ public abstract class AbstractOscalConverter {
         // In OSCAL, each object should be its own <p>
         
         // Remove the prefix, "[SELECT FROM: " and the suffix, "]"
-        int suffix_index = element.text.indexOf(suffix);
-        String object_list = element.text.substring(prefix.length(), suffix_index);
+        // Not every published element is well formed: some are missing the leading "[" and some
+        // carry a doubled "[[". Chopping a fixed prefix.length() off the front eats the first
+        // character of the first object in the former case, and an element with no "]" at all gives
+        // indexOf() == -1, which throws and aborts the whole catalog build. Match the prefix where
+        // it actually starts, and fall back to the end of the text when the suffix is absent.
+        String text = element.text;
+        String unbracketedPrefix = prefix.startsWith("[") ? prefix.substring(1) : prefix;
+
+        int start = 0;
+        while (start < text.length() && text.charAt(start) == '[') {
+            start++;
+        }
+        if (text.startsWith(unbracketedPrefix, start)) {
+            start += unbracketedPrefix.length();
+        } else {
+            // Nothing recognisable to strip, so keep the text as it stands.
+            start = 0;
+        }
+
+        int suffix_index = text.indexOf(suffix, start);
+        if (suffix_index < 0) {
+            suffix_index = text.length();
+        }
+        String object_list = text.substring(start, suffix_index);
 
         // Each object is separated by ";" 
         // Convert the separator to two newlines, because fromMarkdown() converts two newlines to <p>
