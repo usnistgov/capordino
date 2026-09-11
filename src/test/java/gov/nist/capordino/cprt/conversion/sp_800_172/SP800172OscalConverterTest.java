@@ -1,10 +1,12 @@
 package gov.nist.capordino.cprt.conversion.sp_800_172;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
 
@@ -87,8 +89,34 @@ public class SP800172OscalConverterTest {
         assertTrue(results.isPassing());
     }
 
+    /**
+     * Two of the assessment-method elements in this export are missing the leading "[" of
+     * "[SELECT FROM: ", so stripping a fixed-length prefix ate the first letter of their first
+     * assessment object. The committed catalog under catalogs/nist.gov/sp_800_172/ carries both.
+     */
     @Test
     @Order(3)
+    void testAssessmentObjectsKeepTheirFirstCharacter() throws IOException, InvalidFrameworkIdentifier {
+        SP800172OscalConverter converter = new SP800172OscalConverter(version, root);
+        Catalog catalog = converter.buildCatalog();
+
+        Path outFilePath = tempOutDirectory.resolve("cprt800172-assessment-objects_catalog.xml");
+        ISerializer<Catalog> serializer = bindingContext.newSerializer(Format.XML, Catalog.class);
+        serializer.serialize(catalog, outFilePath);
+
+        String xml = Files.readString(outFilePath);
+
+        assertTrue(xml.contains("<p>Incident response policy</p>"));
+        assertTrue(xml.contains("<p>System and information integrity policy</p>"));
+        assertFalse(xml.contains("<p>ncident response policy</p>"));
+        assertFalse(xml.contains("<p>ystem and information integrity policy</p>"));
+
+        // The prefix itself must never survive into the catalog.
+        assertFalse(xml.contains("SELECT FROM"));
+    }
+
+    @Test
+    @Order(4)
     @Tag("Online")
     void testConvertSP800172ToOscal() throws IOException, InterruptedException, InvalidFrameworkIdentifier {
         CprtApiClient client = new CprtApiClient();
@@ -104,7 +132,7 @@ public class SP800172OscalConverterTest {
     }
 
     @Test
-    @Order(4)
+    @Order(5)
     @Tag("Online")
     void testValidateSP800172ToOscal() throws IOException {
         IValidationResult results = bindingContext.validateWithConstraints(Cprt800172OutFilePath);
